@@ -1,48 +1,59 @@
-# RankForge AI — Product Roadmap & Phase Boundaries
-**Document Version:** 1.0.0  
-**Status:** Phase 1 Complete / Phase 2 Ready  
+# RankForge AI — Product & Engineering Roadmap
 
----
+## 12-Phase Master Implementation Plan
 
-## 1. Phase Governance & Execution Strategy
+- [x] **Phase 1: Application Foundation & Multi-Tenant Architecture** (COMPLETED)
+  - Next.js 15 App Router frontend with dark theme design system.
+  - FastAPI backend with PostgreSQL, Alembic, Celery, and Redis.
+  - Organization and user profile data models.
+  - DevSecOps CI verification and Docker Compose harness.
 
-```mermaid
-flowchart LR
-    P1["Phase 1: Foundation (COMPLETED)"] --> P2["Phase 2: Core SEO & AI (NEXT)"]
-    P2 --> P3["Phase 3: Automated Remediation (FUTURE)"]
-```
+- [x] **Phase 2: Authentication, Organization Workspaces & Website Management** (COMPLETED)
+  - Production authentication integration with Supabase.
+  - Organization workspace creation, invitation workflows, and RBAC (`owner`, `admin`, `editor`, `viewer`).
+  - Website project management and domain verification tokens.
 
----
+- [x] **Phase 3: Domain Verification & Intelligent Website Crawler** (COMPLETED)
+  - Ownership verification via DNS TXT record and HTML meta tag.
+  - Asynchronous recursive crawler with SSRF guard and response size limits.
+  - Robots.txt parser and XML sitemap discovery.
+  - Page metadata parser, heading tree extraction, and internal link graph builder.
 
-## 2. Phase 1: SaaS Foundation & Infrastructure (Completed)
-- [x] Monorepo workspace (`apps/web`, `apps/api`, `services/worker`, `packages/shared`, `infrastructure/docker`).
-- [x] Enterprise dark-first design system with restrained crimson accents and tabular numerals.
-- [x] Abstract SVG geometric brand logomark.
-- [x] FastAPI core backend with `/health/live`, `/health/ready`, and structured JSON logging.
-- [x] PostgreSQL 16 schema with 11 relational tables and Alembic migrations.
-- [x] Multi-tenant boundary isolation and documented Row-Level Security (RLS) policies.
-- [x] Redis 7 and Celery worker background queue with tested smoke task.
-- [x] Server-Side Request Forgery (SSRF) defense engine blocking private subnets and metadata IPs.
-- [x] Next.js 15 App Router web application with complete 12-page responsive shell.
-- [x] Safe, deterministic preflight website auditing (HTTP status, latency, SSL, robots.txt, sitemap).
-- [x] Domain ownership verification workflows (DNS TXT, meta tag, file upload).
-- [x] Automated test suites: Pytest backend (17 tests), Vitest frontend (7 tests), Playwright smoke tests.
-- [x] Docker Compose local development and CI quality gate.
+- [x] **Phase 4: Advanced Technical SEO Audit & Scoring Engine** (COMPLETED)
+  - 30+ deterministic technical SEO audit rules across 8 categories.
+  - Category and aggregate 0-100 health scoring with coverage weighting.
+  - Historical audit comparison (resolved vs regressed vs new findings).
+  - Technical audit interactive dashboard and page inspector.
 
----
+- [x] **Phase 5: AI-Powered SEO Optimization & Recommendation Engine** (COMPLETED)
+  - Google Gemini API (`gemini-2.5-flash`) integration via official `google-genai` Python SDK.
+  - Deterministic Mock Provider for offline CI testing and local sandboxes.
+  - 6 grounded recommendation types: Titles, Meta Descriptions, Headings, Content Structure, Internal Links, Image Accessibility.
+  - Strict prompt-injection defense, XML delimiter isolation, and post-generation validator.
+  - Recommendation review workflow: `draft`, `needs_review`, `approved`, `rejected`, `outdated`.
+  - Side-by-side Before/After diff comparison and inline proposal editor.
+  - Immutable version history snapshotting and regeneration with user guidance.
+  - Organization-level usage metering, daily request caps, and monthly token quota enforcement.
+  - Asynchronous Celery bulk optimization engine.
+  - Zero live website modifications guarantee.
 
-## 3. Phase 2: Core SEO Intelligence & AI Recommendations (Next Phase)
-- **Supabase Authentication:** Replace dev-mode auth bypass with production Supabase Auth JWT cookies, user session management, and OAuth providers (Google, GitHub).
-- **Google Search Console Integration:** OAuth2 connection flow allowing users to authorize properties and schedule daily query, impression, and click data syncing.
-- **Deep Technical Crawler:** Recursive asynchronous crawler discovering sitemaps, canonical loops, broken internal links, and Core Web Vitals.
-- **AI Recommendation Engine:** Structured prompt pipeline evaluating deterministic audit findings against schema.org and modern SEO best practices.
-- **Stripe Subscription Billing:** Checkout sessions, customer portal, and webhook listener updating `subscriptions` table.
-- **Automated PDF Reports:** Headless Chromium service rendering executive white-label audit reports.
+- [ ] **Phase 6: Search Intent & Semantic Content Intelligence** (UPCOMING)
+  - Keyword intent classification, semantic topical gaps, content freshness tracking.
 
----
+- [ ] **Phase 7: Google Search Console & Organic Performance Tracking**
+  - OAuth2 property connection, impression/click time series, indexation monitoring.
 
-## 4. Phase 3: Automated Remediation & Agency Collaboration (Future)
-- **Authorized CMS Connectors:** WordPress plugin, Shopify app, and Next.js edge middleware for deploying approved meta tags, canonicals, and redirects.
-- **Single-Click Rollback:** Immutable version history enabling instant reversal of any deployed modification.
-- **Multi-Brand Agency Workspaces:** Client sub-accounts with custom permission tiers and white-label client portals.
-- **Scheduled Automated Crawl Alerts:** Webhook and email alerts for indexation drops or broken links.
+- [ ] **Phase 8: Authorized CMS Integrations & Safe Auto-Remediation**
+  - WordPress, Shopify, and Next.js edge webhooks for approved changes with instant rollback.
+
+- [ ] **Phase 9: Competitor Intelligence & Benchmarking**
+  - Competitor crawl comparison, SERP feature gap analysis, velocity tracking.
+
+- [ ] **Phase 10: White-Label Reporting & Executive Summaries**
+  - Scheduled automated PDF exports, branded agency templates, client portals.
+
+- [ ] **Phase 11: Stripe Subscription Billing & Usage Monetization**
+  - Tiered SaaS plans, checkout sessions, billing portal, overage metering.
+
+- [ ] **Phase 12: Enterprise Security, Team Collaboration & Production Launch**
+  - SSO/SAML, audit log compliance exports, custom webhooks, SOC2 controls.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+
 from celery import shared_task
 
 from app.db.session import SessionLocal

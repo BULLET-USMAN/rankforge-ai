@@ -310,6 +310,103 @@ export interface AuditedPage {
   findings_count: number;
 }
 
+
+export type RecommendationType =
+  | "title_optimization"
+  | "meta_description"
+  | "heading_structure"
+  | "content_structure"
+  | "internal_linking"
+  | "image_alt_guidance";
+
+export type RecommendationStatus = "draft" | "needs_review" | "approved" | "rejected" | "outdated";
+
+export type RecommendationPriority = "high" | "medium" | "low";
+
+export interface AIRecommendation {
+  id: string;
+  organization_id: string;
+  website_project_id: string;
+  audit_run_id?: string | null;
+  source_crawl_id?: string | null;
+  source_finding_id?: string | null;
+  job_id?: string | null;
+  page_url: string;
+  recommendation_type: RecommendationType;
+  status: RecommendationStatus;
+  priority: RecommendationPriority;
+  current_value?: string | null;
+  suggested_value: string;
+  explanation: string;
+  evidence_json: {
+    supporting_evidence?: string[];
+    meta?: Record<string, any>;
+  };
+  limitations?: string | null;
+  alternative_suggestions?: string[] | null;
+  prompt_template: string;
+  prompt_version: string;
+  model_identifier: string;
+  current_version_number: number;
+  created_by?: string | null;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  rejected_by?: string | null;
+  rejected_at?: string | null;
+  rejection_reason?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AIRecommendationVersion {
+  id: string;
+  version_number: number;
+  suggested_value: string;
+  explanation?: string | null;
+  user_guidance?: string | null;
+  created_by?: string | null;
+  created_at: string;
+}
+
+export interface AIGenerationJob {
+  id: string;
+  organization_id: string;
+  website_project_id: string;
+  audit_run_id?: string | null;
+  status: "queued" | "running" | "completed" | "failed" | "cancelled";
+  celery_task_id?: string | null;
+  recommendation_types: string[];
+  total_items: number;
+  completed_items: number;
+  failed_items: number;
+  error_message?: string | null;
+  created_by?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AIUsageSummary {
+  daily_requests_used: number;
+  daily_requests_limit: number;
+  monthly_tokens_used: number;
+  monthly_tokens_limit: number;
+  monthly_estimated_cost_usd: number;
+  quota_status: "normal" | "exceeded";
+}
+
+export interface AIQuotaDetails {
+  daily_requests_limit: number;
+  monthly_token_limit: number;
+  max_batch_size: number;
+  max_concurrent_jobs: number;
+  estimated_input_cost_per_million: number;
+  estimated_output_cost_per_million: number;
+  provider: string;
+  model: string;
+}
+
 export const api = {
   // Health
   getLiveness: () => request<{ status: string; version: string; timestamp: string }>("/health/live"),
@@ -633,4 +730,143 @@ export const api = {
     }),
   listAuditedPages: (orgId: string, auditId: string) =>
     request<AuditedPage[]>(`/api/v1/organizations/${orgId}/audits/${auditId}/pages`),
+
+  // AI Recommendations (Phase 5)
+  generateAIRecommendation: (
+    orgId: string,
+    websiteId: string,
+    payload: {
+      page_url: string;
+      recommendation_type: RecommendationType;
+      audit_run_id?: string;
+      finding_id?: string;
+      user_guidance?: string;
+    }
+  ) =>
+    request<AIRecommendation>(
+      `/api/v1/organizations/${orgId}/websites/${websiteId}/ai/generate`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  bulkGenerateAIRecommendations: (
+    orgId: string,
+    websiteId: string,
+    payload: {
+      recommendation_types: RecommendationType[];
+      audit_run_id?: string;
+      page_limit?: number;
+    }
+  ) =>
+    request<AIGenerationJob>(
+      `/api/v1/organizations/${orgId}/websites/${websiteId}/ai/bulk-generate`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  listAIRecommendations: (
+    orgId: string,
+    websiteId: string,
+    params: {
+      status?: string;
+      recommendation_type?: string;
+      priority?: string;
+      page?: number;
+      page_size?: number;
+    } = {}
+  ) => {
+    const query = new URLSearchParams();
+    if (params.status) query.set("status", params.status);
+    if (params.recommendation_type) query.set("recommendation_type", params.recommendation_type);
+    if (params.priority) query.set("priority", params.priority);
+    if (params.page) query.set("page", params.page.toString());
+    if (params.page_size) query.set("page_size", params.page_size.toString());
+    const qs = query.toString();
+    return request<{
+      items: AIRecommendation[];
+      total: number;
+      page: number;
+      page_size: number;
+      total_pages: number;
+    }>(`/api/v1/organizations/${orgId}/websites/${websiteId}/ai/recommendations${qs ? `?${qs}` : ""}`);
+  },
+
+  getAIGenerationJob: (orgId: string, jobId: string) =>
+    request<AIGenerationJob>(`/api/v1/organizations/${orgId}/ai/jobs/${jobId}`),
+
+  cancelAIGenerationJob: (orgId: string, jobId: string) =>
+    request<AIGenerationJob>(`/api/v1/organizations/${orgId}/ai/jobs/${jobId}/cancel`, {
+      method: "POST",
+    }),
+
+  getAIRecommendation: (orgId: string, recommendationId: string) =>
+    request<AIRecommendation>(
+      `/api/v1/organizations/${orgId}/ai/recommendations/${recommendationId}`
+    ),
+
+  editAIRecommendation: (
+    orgId: string,
+    recommendationId: string,
+    payload: {
+      suggested_value?: string;
+      status?: RecommendationStatus;
+      user_guidance?: string;
+    }
+  ) =>
+    request<AIRecommendation>(
+      `/api/v1/organizations/${orgId}/ai/recommendations/${recommendationId}`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      }
+    ),
+
+  approveAIRecommendation: (orgId: string, recommendationId: string) =>
+    request<AIRecommendation>(
+      `/api/v1/organizations/${orgId}/ai/recommendations/${recommendationId}/approve`,
+      {
+        method: "POST",
+      }
+    ),
+
+  rejectAIRecommendation: (
+    orgId: string,
+    recommendationId: string,
+    payload?: { reason?: string }
+  ) =>
+    request<AIRecommendation>(
+      `/api/v1/organizations/${orgId}/ai/recommendations/${recommendationId}/reject`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload || {}),
+      }
+    ),
+
+  regenerateAIRecommendation: (
+    orgId: string,
+    recommendationId: string,
+    payload?: { user_guidance?: string }
+  ) =>
+    request<AIRecommendation>(
+      `/api/v1/organizations/${orgId}/ai/recommendations/${recommendationId}/regenerate`,
+      {
+        method: "POST",
+        body: JSON.stringify(payload || {}),
+      }
+    ),
+
+  getAIRecommendationHistory: (orgId: string, recommendationId: string) =>
+    request<AIRecommendationVersion[]>(
+      `/api/v1/organizations/${orgId}/ai/recommendations/${recommendationId}/history`
+    ),
+
+  getAIUsageSummary: (orgId: string) =>
+    request<AIUsageSummary>(`/api/v1/organizations/${orgId}/ai/usage`),
+
+  getAIQuotaDetails: (orgId: string) =>
+    request<AIQuotaDetails>(`/api/v1/organizations/${orgId}/ai/quotas`),
 };

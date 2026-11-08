@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import {
   ShieldAlert,
   ShieldCheck,
@@ -612,7 +613,16 @@ export default function TechnicalAuditDashboard({
                         )}
 
                         <div className="pt-2 flex items-center justify-between border-t border-rf-border/50 text-[10px] text-rf-text-muted font-mono">
-                          <span>Fingerprint: {f.finding_fingerprint.slice(0, 16)}...</span>
+                          <div className="flex items-center gap-3">
+                            <span>Fingerprint: {f.finding_fingerprint.slice(0, 16)}...</span>
+                            <Link
+                              href={`/dashboard/ai-optimization?website_id=${websiteId}`}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 border border-purple-500/30 text-xs font-sans font-medium transition-colors"
+                            >
+                              <Sparkles className="w-3 h-3 text-purple-400" />
+                              <span>Generate AI Recommendation</span>
+                            </Link>
+                          </div>
                           {f.page_url && (
                             <a
                               href={f.page_url}

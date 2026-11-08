@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import (
+    ai_recommendations,
     audits,
     crawls,
     invitations,
@@ -29,6 +30,7 @@ api_router.include_router(invitations.router, tags=["Invitations"])
 api_router.include_router(verification.router, tags=["Domain Verification"])
 api_router.include_router(crawls.router, tags=["Website Crawler"])
 api_router.include_router(seo_audits.router, tags=["SEO Technical Audits"])
+api_router.include_router(ai_recommendations.router, tags=["AI Optimization"])
 
 # Phase 1 Legacy routes (Projects, Audits, Worker) preserved for backward compatibility
 api_router.include_router(projects.router, prefix="/projects", tags=["Projects"])

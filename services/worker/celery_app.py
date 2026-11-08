@@ -10,7 +10,7 @@ celery_app = Celery(
     "rankforge_worker",
     broker=broker_url,
     backend=result_backend,
-    include=["tasks.smoke", "tasks.crawler", "tasks.audit"],
+    include=["tasks.smoke", "tasks.crawler", "tasks.audit", "tasks.ai"],
 )
 
 celery_app.conf.update(

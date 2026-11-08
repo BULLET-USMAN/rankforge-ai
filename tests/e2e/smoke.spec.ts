@@ -148,4 +148,15 @@ test.describe("RankForge AI — Phase 4 Master Smoke Suite", () => {
     await expect(page.getByRole("heading", { name: /Organization Settings/i })).toBeVisible();
     await page.screenshot({ path: "test-results/screenshots/desktop-settings-page.png", fullPage: true });
   });
+
+  test("14. AI SEO Optimization Dashboard renders Gemini integration and controls", async ({ page }) => {
+    await page.goto("/dashboard/ai-optimization");
+    // Verify header or empty state
+    await expect(
+      page.getByRole("heading", { name: /AI SEO Optimization Engine|No Websites In Workspace/i })
+    ).toBeVisible();
+
+    // Capture screenshot
+    await page.screenshot({ path: "test-results/screenshots/desktop-ai-optimization-page.png", fullPage: true });
+  });
 });

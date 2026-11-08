@@ -1,5 +1,10 @@
 from app.db.base import Base
 from app.models.activity_log import ActivityLog
+from app.models.ai_generation_job import AIGenerationJob
+from app.models.ai_quota_reservation import AIQuotaReservation
+from app.models.ai_recommendation import AIRecommendation
+from app.models.ai_recommendation_version import AIRecommendationVersion
+from app.models.ai_usage_record import AIUsageRecord
 from app.models.audit_job import AuditJob
 from app.models.audit_result import AuditResult
 from app.models.crawl_job import CrawlJob
@@ -20,6 +25,12 @@ from app.models.website_project import WebsiteProject
 from app.models.website_verification import WebsiteVerification
 
 __all__ = [
+    "AIGenerationJob",
+    "AIRecommendation",
+    "AIRecommendationVersion",
+    "AIUsageRecord",
+    "AIQuotaReservation",
+
     "Base",
     "Profile",
     "Organization",

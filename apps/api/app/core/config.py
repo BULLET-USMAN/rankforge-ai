@@ -61,6 +61,20 @@ class Settings(BaseSettings):
     # Invitation settings
     INVITATION_EXPIRY_DAYS: int = 7
 
+    # AI Engine & Gemini Configuration
+    GEMINI_API_KEY: Optional[str] = None
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    AI_PROVIDER: str = "gemini"  # "gemini" or "mock"
+    AI_MAX_OUTPUT_TOKENS: int = 2048
+    AI_REQUEST_TIMEOUT_SECONDS: int = 30
+    AI_MAX_RETRIES: int = 3
+    AI_DAILY_ORG_REQUEST_LIMIT: int = 100
+    AI_MONTHLY_ORG_TOKEN_LIMIT: int = 500000
+    AI_MAX_BATCH_SIZE: int = 20
+    AI_MAX_CONCURRENT_JOBS_PER_ORG: int = 3
+    AI_ESTIMATED_INPUT_COST_PER_MILLION: float = 0.075
+    AI_ESTIMATED_OUTPUT_COST_PER_MILLION: float = 0.30
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
