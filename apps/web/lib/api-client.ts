@@ -217,6 +217,99 @@ export interface CrawledPageDetail extends CrawledPage {
   }>;
 }
 
+export interface SEOAuditFinding {
+  id: string;
+  audit_run_id: string;
+  organization_id: string;
+  website_project_id: string;
+  rule_id: string;
+  rule_version: string;
+  page_url?: string | null;
+  severity: "critical" | "high" | "medium" | "low" | "informational";
+  category: string;
+  title: string;
+  description: string;
+  evidence_json: Record<string, any>;
+  recommendation: string;
+  finding_fingerprint: string;
+  created_at: string;
+}
+
+export interface SEOAuditCategoryScore {
+  id: string;
+  audit_run_id: string;
+  category: string;
+  score: number;
+  weight: number;
+  findings_count: number;
+  passed_checks_count: number;
+  details_json: Record<string, any>;
+  created_at: string;
+}
+
+export interface SEOAuditRun {
+  id: string;
+  organization_id: string;
+  website_project_id: string;
+  crawl_job_id: string;
+  status:
+    | "queued"
+    | "running"
+    | "completed"
+    | "partially_completed"
+    | "failed"
+    | "cancelled"
+    | "insufficient_coverage";
+  ruleset_version: string;
+  scoring_version: string;
+  score?: number | null;
+  score_coverage: number;
+  pages_evaluated: number;
+  pages_not_evaluated: number;
+  findings_count: number;
+  critical_count: number;
+  high_count: number;
+  medium_count: number;
+  low_count: number;
+  info_count: number;
+  summary_json: Record<string, any>;
+  error_message?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  category_scores?: SEOAuditCategoryScore[];
+}
+
+export interface SEOAuditComparison {
+  id: string;
+  organization_id: string;
+  website_project_id: string;
+  current_audit_id: string;
+  previous_audit_id: string;
+  score_change: number;
+  new_findings_count: number;
+  resolved_findings_count: number;
+  persisting_findings_count: number;
+  comparison_data_json: Record<string, any>;
+  created_at: string;
+}
+
+export interface AuditedPage {
+  url: string;
+  normalized_url: string;
+  status_code: number;
+  response_time_ms: number;
+  depth: number;
+  title?: string | null;
+  canonical_url?: string | null;
+  meta_robots?: string | null;
+  h1_count: number;
+  images_count: number;
+  images_missing_alt_count: number;
+  findings_count: number;
+}
+
 export const api = {
   // Health
   getLiveness: () => request<{ status: string; version: string; timestamp: string }>("/health/live"),
@@ -481,4 +574,63 @@ export const api = {
     }),
   listProjectAudits: (projectId: string) =>
     request<any[]>(`/api/v1/audits?project_id=${encodeURIComponent(projectId)}`),
+
+  // SEO Technical Audits (Phase 4)
+  triggerSEOAudit: (
+    orgId: string,
+    websiteId: string,
+    payload?: { crawl_job_id?: string; execute_sync?: boolean }
+  ) =>
+    request<SEOAuditRun>(`/api/v1/organizations/${orgId}/websites/${websiteId}/audits`, {
+      method: "POST",
+      body: JSON.stringify(payload || {}),
+    }),
+  listWebsiteSEOAudits: (orgId: string, websiteId: string, page: number = 1, pageSize: number = 20) =>
+    request<{
+      items: SEOAuditRun[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>(`/api/v1/organizations/${orgId}/websites/${websiteId}/audits?page=${page}&page_size=${pageSize}`),
+  getSEOAuditRun: (orgId: string, auditId: string) =>
+    request<SEOAuditRun>(`/api/v1/organizations/${orgId}/audits/${auditId}`),
+  listSEOAuditFindings: (
+    orgId: string,
+    auditId: string,
+    params: {
+      category?: string;
+      severity?: string;
+      rule_id?: string;
+      page_url?: string;
+      search?: string;
+      page?: number;
+      page_size?: number;
+    } = {}
+  ) => {
+    const query = new URLSearchParams();
+    if (params.category) query.set("category", params.category);
+    if (params.severity) query.set("severity", params.severity);
+    if (params.rule_id) query.set("rule_id", params.rule_id);
+    if (params.page_url) query.set("page_url", params.page_url);
+    if (params.search) query.set("search", params.search);
+    if (params.page) query.set("page", params.page.toString());
+    if (params.page_size) query.set("page_size", params.page_size.toString());
+    const qs = query.toString();
+    return request<{
+      items: SEOAuditFinding[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>(`/api/v1/organizations/${orgId}/audits/${auditId}/findings${qs ? `?${qs}` : ""}`);
+  },
+  getSEOAuditCategoryScores: (orgId: string, auditId: string) =>
+    request<SEOAuditCategoryScore[]>(`/api/v1/organizations/${orgId}/audits/${auditId}/scores`),
+  compareSEOAudits: (orgId: string, auditId: string, previousAuditId: string) =>
+    request<SEOAuditComparison>(`/api/v1/organizations/${orgId}/audits/${auditId}/compare/${previousAuditId}`),
+  cancelSEOAudit: (orgId: string, auditId: string) =>
+    request<SEOAuditRun>(`/api/v1/organizations/${orgId}/audits/${auditId}/cancel`, {
+      method: "POST",
+    }),
+  listAuditedPages: (orgId: string, auditId: string) =>
+    request<AuditedPage[]>(`/api/v1/organizations/${orgId}/audits/${auditId}/pages`),
 };

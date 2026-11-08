@@ -3,442 +3,306 @@
 import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-  SearchCode,
   ShieldCheck,
   AlertTriangle,
-  CheckCircle2,
-  Clock,
-  ExternalLink,
   Play,
   RotateCw,
-  FileText,
-  Lock,
-  Server,
+  Globe,
+  Sparkles,
   Zap,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { api } from "@/lib/api-client";
-import { formatDate } from "@/lib/utils";
+import { api, type Organization, type WebsiteProject } from "@/lib/api-client";
+import TechnicalAuditDashboard from "@/components/audits/technical-audit-dashboard";
 import Link from "next/link";
 
 function AuditsContent() {
   const searchParams = useSearchParams();
   const initialProjectId = searchParams.get("project_id");
 
-  const [projects, setProjects] = useState<any[]>([]);
-  const [selectedProjectId, setSelectedProjectId] = useState<string>(initialProjectId || "");
-  const [targetUrl, setTargetUrl] = useState<string>("");
-  const [isAuditing, setIsAuditing] = useState(false);
-  const [currentJob, setCurrentJob] = useState<any | null>(null);
-  const [auditHistory, setAuditHistory] = useState<any[]>([]);
-  const [auditError, setAuditError] = useState<string | null>(null);
+  // Mode: "technical_engine" (Phase 4) or "preflight_quick" (Phase 1 legacy)
+  const [auditMode, setAuditMode] = useState<"technical_engine" | "preflight_quick">("technical_engine");
 
+  // Workspace & Websites
+  const [organizations, setOrganizations] = useState<Organization[]>([]);
+  const [currentOrgId, setCurrentOrgId] = useState<string>("");
+  const [websites, setWebsites] = useState<WebsiteProject[]>([]);
+  const [selectedWebsiteId, setSelectedWebsiteId] = useState<string>(initialProjectId || "");
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Preflight legacy state
+  const [targetUrl, setTargetUrl] = useState<string>("");
+  const [isAuditingPreflight, setIsAuditingPreflight] = useState(false);
+  const [preflightJob, setPreflightJob] = useState<any | null>(null);
+  const [preflightError, setPreflightError] = useState<string | null>(null);
+
+  // 1. Initial Load: Organizations & Websites
   useEffect(() => {
-    async function init() {
+    async function loadData() {
       try {
-        const projs = await api.listProjects();
-        setProjects(projs || []);
-        if (projs && projs.length > 0) {
-          const activeId = initialProjectId || projs[0].id;
-          setSelectedProjectId(activeId);
-          const found = projs.find((p) => p.id === activeId);
-          if (found) {
-            setTargetUrl(found.primary_url);
-            loadHistory(found.id);
+        const orgs = await api.listOrganizations();
+        setOrganizations(orgs || []);
+        if (orgs && orgs.length > 0) {
+          const orgId = orgs[0].id;
+          setCurrentOrgId(orgId);
+
+          const sites = await api.listWebsites(orgId);
+          setWebsites(sites || []);
+
+          if (sites && sites.length > 0) {
+            const activeId = initialProjectId && sites.some((s) => s.id === initialProjectId)
+              ? initialProjectId
+              : sites[0].id;
+            setSelectedWebsiteId(activeId);
+            const found = sites.find((s) => s.id === activeId);
+            if (found) {
+              setTargetUrl(found.primary_url);
+            }
           }
         }
-      } catch {}
+      } catch (err) {
+        console.error("Failed to load organizations or websites", err);
+      } finally {
+        setIsLoading(false);
+      }
     }
-    init();
+    loadData();
   }, [initialProjectId]);
 
-  const loadHistory = async (projectId: string) => {
+  // When Org changes
+  const handleOrgChange = async (orgId: string) => {
+    setCurrentOrgId(orgId);
     try {
-      const history = await api.listProjectAudits(projectId);
-      setAuditHistory(history || []);
-      if (history && history.length > 0 && !currentJob) {
-        setCurrentJob(history[0]);
+      const sites = await api.listWebsites(orgId);
+      setWebsites(sites || []);
+      if (sites && sites.length > 0) {
+        setSelectedWebsiteId(sites[0].id);
+        setTargetUrl(sites[0].primary_url);
+      } else {
+        setSelectedWebsiteId("");
+        setTargetUrl("");
       }
-    } catch {}
-  };
-
-  const handleProjectSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const id = e.target.value;
-    setSelectedProjectId(id);
-    const p = projects.find((proj) => proj.id === id);
-    if (p) {
-      setTargetUrl(p.primary_url);
-      loadHistory(p.id);
+    } catch (err) {
+      console.error("Failed to fetch websites for org", err);
     }
   };
 
-  const handleRunAudit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAuditError(null);
+  const handleWebsiteChange = (siteId: string) => {
+    setSelectedWebsiteId(siteId);
+    const site = websites.find((s) => s.id === siteId);
+    if (site) {
+      setTargetUrl(site.primary_url);
+    }
+  };
 
-    if (!selectedProjectId) {
-      setAuditError("Please select a website project.");
+  // Run Preflight Audit (Legacy)
+  const handleRunPreflight = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPreflightError(null);
+    if (!selectedWebsiteId) {
+      setPreflightError("Please select a website project.");
       return;
     }
     if (!targetUrl.trim()) {
-      setAuditError("Target URL is required.");
+      setPreflightError("Target URL is required.");
       return;
     }
 
-    setIsAuditing(true);
+    setIsAuditingPreflight(true);
     try {
       const job = await api.triggerAudit({
-        project_id: selectedProjectId,
+        project_id: selectedWebsiteId,
         target_url: targetUrl.trim(),
         job_type: "preflight",
       });
-      setCurrentJob(job);
-      await loadHistory(selectedProjectId);
+      setPreflightJob(job);
     } catch (err: any) {
-      setAuditError(err.message || "Audit execution failed");
+      setPreflightError(err.message || "Preflight audit failed");
     } finally {
-      setIsAuditing(false);
+      setIsAuditingPreflight(false);
     }
   };
 
-  const activeResult = currentJob?.results?.[0];
+  const activeWebsite = websites.find((s) => s.id === selectedWebsiteId);
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
+    <div className="space-y-6 max-w-5xl">
+      {/* Top Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-rf-text tracking-tight">Technical SEO Audits</h1>
+          <h1 className="text-xl font-bold text-rf-text tracking-tight flex items-center gap-2">
+            <ShieldCheck className="w-5 h-5 text-rf-crimson" />
+            <span>Technical SEO Audits</span>
+          </h1>
           <p className="text-xs text-rf-text-secondary mt-1">
-            Deterministic HTTP inspection, SSL security, robots.txt, sitemap, and latency analysis.
+            Comprehensive deterministic SEO auditing engine analyzing crawl snapshots across 8 technical categories.
           </p>
+        </div>
+
+        {/* Mode Switcher */}
+        <div className="flex items-center gap-1.5 p-1 bg-rf-surface border border-rf-border rounded-lg text-xs">
+          <button
+            onClick={() => setAuditMode("technical_engine")}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
+              auditMode === "technical_engine"
+                ? "bg-rf-crimson text-white"
+                : "text-rf-text-secondary hover:text-rf-text"
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Audit Engine (Phase 4)</span>
+          </button>
+          <button
+            onClick={() => setAuditMode("preflight_quick")}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
+              auditMode === "preflight_quick"
+                ? "bg-rf-crimson text-white"
+                : "text-rf-text-secondary hover:text-rf-text"
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5" />
+            <span>Quick Single-URL Check</span>
+          </button>
         </div>
       </div>
 
-      {/* Runner Bar */}
+      {/* Website Project & Workspace Selector Bar */}
       <Card className="border-rf-border bg-rf-bg-secondary">
         <CardContent className="p-4">
-          <form onSubmit={handleRunAudit} className="flex flex-col md:flex-row gap-3">
-            <div className="w-full md:w-64">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
               <label className="text-[11px] font-medium text-rf-text-secondary block mb-1">
-                Website Project
+                Workspace / Organization
               </label>
               <select
-                value={selectedProjectId}
-                onChange={handleProjectSelect}
+                value={currentOrgId}
+                onChange={(e) => handleOrgChange(e.target.value)}
                 className="w-full h-9 px-3 rounded-md border border-rf-border bg-rf-surface text-xs text-rf-text focus:border-rf-crimson focus:outline-none"
               >
-                {projects.length === 0 && <option value="">No projects registered</option>}
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.domain})
+                {organizations.map((org) => (
+                  <option key={org.id} value={org.id}>
+                    {org.name}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div className="flex-1">
+            <div>
               <label className="text-[11px] font-medium text-rf-text-secondary block mb-1">
-                Target URL
+                Website Project
               </label>
-              <input
-                type="url"
-                value={targetUrl}
-                onChange={(e) => setTargetUrl(e.target.value)}
-                placeholder="https://example.com"
-                className="w-full h-9 px-3 rounded-md border border-rf-border bg-rf-surface text-xs text-rf-text placeholder:text-rf-text-muted focus:border-rf-crimson focus:outline-none"
-                required
-              />
-            </div>
-
-            <div className="flex items-end">
-              <Button type="submit" disabled={isAuditing || !selectedProjectId} className="h-9 px-5">
-                {isAuditing ? (
-                  <>
-                    <RotateCw className="w-3.5 h-3.5 mr-2 animate-spin" />
-                    Inspecting...
-                  </>
+              <select
+                value={selectedWebsiteId}
+                onChange={(e) => handleWebsiteChange(e.target.value)}
+                className="w-full h-9 px-3 rounded-md border border-rf-border bg-rf-surface text-xs text-rf-text focus:border-rf-crimson focus:outline-none"
+              >
+                {websites.length === 0 ? (
+                  <option value="">No website projects registered</option>
                 ) : (
-                  <>
-                    <Play className="w-3.5 h-3.5 mr-2" />
-                    Run Preflight Audit
-                  </>
+                  websites.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name} ({w.domain}) {w.is_verified ? "• Verified" : "• Pending"}
+                    </option>
+                  ))
                 )}
-              </Button>
+              </select>
             </div>
-          </form>
-
-          {auditError && (
-            <div className="mt-3 p-3 rounded bg-rf-error/15 border border-rf-error/30 text-xs text-red-300 flex items-start gap-2">
-              <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
-              <div>
-                <span className="font-semibold">Security / Validation Error:</span> {auditError}
-              </div>
-            </div>
-          )}
+          </div>
         </CardContent>
       </Card>
 
-      {/* Main Grid: Audit Results & History */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Detailed Audit Findings */}
-        <div className="lg:col-span-2 space-y-4">
-          {activeResult ? (
-            <div className="space-y-4">
-              {/* Score & Key Metrics Banner */}
-              <div className="p-5 rounded-lg border border-rf-border bg-rf-bg-secondary grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <div className="space-y-1">
-                  <div className="text-[11px] uppercase tracking-wider text-rf-text-muted font-mono">
-                    Health Score
-                  </div>
-                  <div
-                    className={`text-3xl font-bold font-tabular ${
-                      activeResult.score >= 80
-                        ? "text-green-400"
-                        : activeResult.score >= 50
-                        ? "text-amber-400"
-                        : "text-red-400"
-                    }`}
-                  >
-                    {activeResult.score}
-                    <span className="text-sm font-normal text-rf-text-muted">/100</span>
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="text-[11px] uppercase tracking-wider text-rf-text-muted font-mono">
-                    HTTP Status
-                  </div>
-                  <div className="text-2xl font-bold font-tabular text-rf-text">
-                    {activeResult.status_code || "—"}
-                  </div>
-                  <div className="text-[11px] text-rf-text-secondary">
-                    {activeResult.status_code === 200 ? "OK" : "Status Code"}
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="text-[11px] uppercase tracking-wider text-rf-text-muted font-mono">
-                    Latency
-                  </div>
-                  <div className="text-2xl font-bold font-tabular text-rf-text">
-                    {activeResult.response_time_ms}
-                    <span className="text-xs font-normal text-rf-text-secondary">ms</span>
-                  </div>
-                  <div className="text-[11px] text-rf-text-secondary">Time to First Byte</div>
-                </div>
-
-                <div className="space-y-1">
-                  <div className="text-[11px] uppercase tracking-wider text-rf-text-muted font-mono">
-                    SSL Security
-                  </div>
-                  <div className="text-2xl font-bold text-rf-text flex items-center gap-1.5">
-                    {activeResult.ssl_info_json?.is_https ? (
-                      <span className="text-green-400 text-sm font-medium">HTTPS Active</span>
-                    ) : (
-                      <span className="text-amber-400 text-sm font-medium">Insecure HTTP</span>
-                    )}
-                  </div>
-                  <div className="text-[11px] text-rf-text-secondary">Transport Layer</div>
-                </div>
-              </div>
-
-              {/* Protocol Checks Row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Card>
-                  <CardContent className="p-4 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-rf-text-muted" />
-                      <div>
-                        <div className="font-semibold text-rf-text">robots.txt Directives</div>
-                        <div className="text-[11px] text-rf-text-secondary">
-                          Crawling instructions file
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant={activeResult.robots_txt_found ? "success" : "secondary"}>
-                      {activeResult.robots_txt_found ? "Accessible" : "Not Found"}
-                    </Badge>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardContent className="p-4 flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <Server className="w-4 h-4 text-rf-text-muted" />
-                      <div>
-                        <div className="font-semibold text-rf-text">XML Sitemap</div>
-                        <div className="text-[11px] text-rf-text-secondary">
-                          Standard root sitemap.xml
-                        </div>
-                      </div>
-                    </div>
-                    <Badge variant={activeResult.sitemap_found ? "success" : "secondary"}>
-                      {activeResult.sitemap_found ? "Found" : "Not Found"}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Findings & Identified Issues */}
-              <Card>
-                <CardHeader className="py-4">
-                  <CardTitle>Identified Diagnostic Findings</CardTitle>
-                  <CardDescription>
-                    Deterministic observations based on headers and protocol responses
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  {(!activeResult.issues_json || activeResult.issues_json.length === 0) ? (
-                    <div className="p-6 text-center text-xs text-rf-text-secondary">
-                      No technical issues discovered during this preflight inspection.
-                    </div>
-                  ) : (
-                    activeResult.issues_json.map((issue: any, idx: number) => (
-                      <div
-                        key={idx}
-                        className="p-3.5 rounded-md border border-rf-border bg-rf-surface/50 space-y-1 text-xs"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-rf-text flex items-center gap-2">
-                            <span
-                              className={`w-2 h-2 rounded-full ${
-                                issue.severity === "critical"
-                                  ? "bg-red-500"
-                                  : issue.severity === "warning"
-                                  ? "bg-amber-500"
-                                  : "bg-blue-400"
-                              }`}
-                            />
-                            {issue.title}
-                          </span>
-                          <Badge
-                            variant={
-                              issue.severity === "critical"
-                                ? "error"
-                                : issue.severity === "warning"
-                                ? "warning"
-                                : "outline"
-                            }
-                            className="uppercase text-[9px] font-mono"
-                          >
-                            {issue.severity}
-                          </Badge>
-                        </div>
-                        <p className="text-rf-text-secondary leading-relaxed pl-4">
-                          {issue.description}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Response Headers Inspector */}
-              <Card>
-                <CardHeader className="py-4">
-                  <CardTitle>Inspected Response Headers</CardTitle>
-                  <CardDescription>
-                    Direct server response headers captured during preflight check
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <div className="max-h-60 overflow-y-auto divide-y divide-rf-border/40 font-mono text-[11px]">
-                    {Object.entries(activeResult.headers_json || {}).map(([key, val]: any) => (
-                      <div key={key} className="px-4 py-2 flex items-center justify-between">
-                        <span className="text-rf-text-secondary select-all">{key}</span>
-                        <span className="text-rf-text max-w-xs truncate select-all">{val}</span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          ) : (
-            <Card>
-              <CardContent className="p-12 text-center space-y-3">
-                <SearchCode className="w-10 h-10 text-rf-text-muted mx-auto" />
-                <div className="text-sm font-semibold text-rf-text">No audit selected</div>
-                <p className="text-xs text-rf-text-secondary max-w-sm mx-auto">
-                  Select a project and click &ldquo;Run Preflight Audit&rdquo; to execute a real-time
-                  technical analysis.
-                </p>
-              </CardContent>
-            </Card>
-          )}
+      {/* No Websites State */}
+      {!isLoading && websites.length === 0 && (
+        <div className="p-8 text-center rounded-lg border border-rf-border bg-rf-surface/40 space-y-3">
+          <Globe className="w-8 h-8 text-rf-crimson mx-auto" />
+          <h3 className="text-sm font-semibold text-rf-text">No Website Projects Found</h3>
+          <p className="text-xs text-rf-text-secondary max-w-sm mx-auto">
+            Add a website project to your workspace and complete domain ownership verification to run technical SEO audits.
+          </p>
+          <Link
+            href="/dashboard/websites"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-rf-crimson hover:bg-rf-crimson-hover text-white text-xs rounded-md transition-colors"
+          >
+            Add Website Project
+          </Link>
         </div>
+      )}
 
-        {/* Right Col: Audit Run History */}
+      {/* MODE 1: Full Technical SEO Audit Engine */}
+      {auditMode === "technical_engine" && activeWebsite && (
+        <TechnicalAuditDashboard
+          orgId={currentOrgId}
+          websiteId={activeWebsite.id}
+          domain={activeWebsite.domain}
+          isVerified={activeWebsite.is_verified}
+        />
+      )}
+
+      {/* MODE 2: Preflight Single-URL Check (Legacy) */}
+      {auditMode === "preflight_quick" && activeWebsite && (
         <div className="space-y-4">
-          <Card>
-            <CardHeader className="py-4">
-              <CardTitle>Audit History</CardTitle>
-              <CardDescription>Historical preflight runs for this project</CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              {auditHistory.length === 0 ? (
-                <div className="p-6 text-center text-xs text-rf-text-secondary">
-                  No audits conducted yet.
+          <Card className="border-rf-border bg-rf-surface/50">
+            <CardContent className="p-4">
+              <form onSubmit={handleRunPreflight} className="flex flex-col sm:flex-row gap-3">
+                <div className="flex-1">
+                  <label className="text-[11px] font-medium text-rf-text-secondary block mb-1">
+                    Target Inspection URL
+                  </label>
+                  <input
+                    type="url"
+                    value={targetUrl}
+                    onChange={(e) => setTargetUrl(e.target.value)}
+                    placeholder="https://example.com"
+                    className="w-full h-9 px-3 rounded-md border border-rf-border bg-rf-bg text-xs text-rf-text placeholder:text-rf-text-muted focus:border-rf-crimson focus:outline-none"
+                    required
+                  />
                 </div>
-              ) : (
-                <div className="divide-y divide-rf-border/40">
-                  {auditHistory.map((job) => {
-                    const isSelected = currentJob?.id === job.id;
-                    const res = job.results?.[0];
-                    return (
-                      <div
-                        key={job.id}
-                        onClick={() => setCurrentJob(job)}
-                        className={`p-3.5 cursor-pointer text-xs transition-colors ${
-                          isSelected
-                            ? "bg-rf-surface border-l-2 border-rf-crimson"
-                            : "hover:bg-rf-surface/40"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold text-rf-text">
-                            {formatDate(job.created_at)}
-                          </span>
-                          <Badge
-                            variant={job.status === "completed" ? "success" : "secondary"}
-                            className="text-[9px]"
-                          >
-                            {job.status}
-                          </Badge>
-                        </div>
-                        {res && (
-                          <div className="flex items-center gap-3 mt-1.5 font-mono text-[11px] text-rf-text-secondary">
-                            <span>Score: {res.score}</span>
-                            <span>&bull;</span>
-                            <span>{res.response_time_ms}ms</span>
-                            <span>&bull;</span>
-                            <span>HTTP {res.status_code}</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                <div className="flex items-end">
+                  <Button type="submit" disabled={isAuditingPreflight} className="h-9 px-4 text-xs bg-rf-crimson hover:bg-rf-crimson-hover text-white">
+                    {isAuditingPreflight ? (
+                      <>
+                        <RotateCw className="w-3.5 h-3.5 mr-2 animate-spin" />
+                        Inspecting...
+                      </>
+                    ) : (
+                      <>
+                        <Play className="w-3.5 h-3.5 mr-2" />
+                        Run Preflight
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+
+              {preflightError && (
+                <div className="mt-3 p-3 rounded bg-rf-error/15 border border-rf-error/30 text-xs text-red-300 flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold">Error:</span> {preflightError}
+                  </div>
                 </div>
               )}
             </CardContent>
           </Card>
+
+          {preflightJob && preflightJob.results && preflightJob.results[0] && (
+            <Card className="border-rf-border bg-rf-surface/80 p-4 space-y-2 text-xs">
+              <div className="font-semibold text-rf-text">Preflight Inspection Result</div>
+              <div className="font-mono text-rf-text-secondary">
+                URL: {preflightJob.results[0].url} • Status: {preflightJob.results[0].status_code} • Score: {preflightJob.results[0].score}/100
+              </div>
+            </Card>
+          )}
         </div>
-      </div>
+      )}
     </div>
   );
 }
 
 export default function AuditsPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="p-8 text-center text-xs text-rf-text-secondary">
-          Loading audit workspace...
-        </div>
-      }
-    >
+    <Suspense fallback={<div className="p-6 text-xs text-rf-text-muted">Loading audit dashboard...</div>}>
       <AuditsContent />
     </Suspense>
   );

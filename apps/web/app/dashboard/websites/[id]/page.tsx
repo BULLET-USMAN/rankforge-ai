@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import TechnicalAuditDashboard from "@/components/audits/technical-audit-dashboard";
 import { Badge } from "@/components/ui/badge";
 import {
   api,
@@ -53,6 +54,7 @@ export default function WebsiteDetailPage() {
   const [project, setProject] = useState<WebsiteProject | null>(null);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [currentOrgId, setCurrentOrgId] = useState<string>("");
+  const [activeSection, setActiveSection] = useState<"audit" | "crawler" | "verification">("audit");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -588,7 +590,56 @@ export default function WebsiteDetailPage() {
         )}
       </Card>
 
+      {/* Primary Section Switcher Tabs */}
+      <div className="flex items-center gap-2 border-b border-rf-border pb-2 text-xs">
+        <button
+          onClick={() => setActiveSection("audit")}
+          className={`px-3.5 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
+            activeSection === "audit"
+              ? "bg-rf-crimson text-white"
+              : "text-rf-text-secondary hover:text-rf-text hover:bg-rf-surface"
+          }`}
+        >
+          <ShieldCheck className="w-3.5 h-3.5" />
+          <span>SEO Technical Audit</span>
+        </button>
+        <button
+          onClick={() => setActiveSection("crawler")}
+          className={`px-3.5 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
+            activeSection === "crawler"
+              ? "bg-rf-crimson text-white"
+              : "text-rf-text-secondary hover:text-rf-text hover:bg-rf-surface"
+          }`}
+        >
+          <RotateCw className="w-3.5 h-3.5" />
+          <span>Website Crawler & Pages ({crawls.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveSection("verification")}
+          className={`px-3.5 py-1.5 rounded-md font-medium transition-colors flex items-center gap-1.5 ${
+            activeSection === "verification"
+              ? "bg-rf-crimson text-white"
+              : "text-rf-text-secondary hover:text-rf-text hover:bg-rf-surface"
+          }`}
+        >
+          <Globe className="w-3.5 h-3.5" />
+          <span>Domain Verification {project.is_verified ? "✓" : "(!)"}</span>
+        </button>
+      </div>
+
+      {/* SECTION 1: Technical SEO Audit */}
+      {activeSection === "audit" && (
+        <TechnicalAuditDashboard
+          orgId={currentOrgId}
+          websiteId={project.id}
+          domain={project.domain}
+          isVerified={project.is_verified}
+          availableCrawls={crawls}
+        />
+      )}
+
       {/* Domain Ownership Verification Section */}
+      {activeSection === "verification" && (
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -781,7 +832,10 @@ export default function WebsiteDetailPage() {
           )}
         </CardContent>
       </Card>
+      )}
 
+      {activeSection === "crawler" && (
+      <>
       {/* Live Active Crawl Monitor Card */}
       {activeCrawl && (
         <Card className="border-rf-crimson/50 bg-rf-surface/40">
@@ -1154,6 +1208,9 @@ export default function WebsiteDetailPage() {
             </div>
           </div>
         </div>
+      )}
+
+      </>
       )}
 
       {/* Edit Details Modal */}

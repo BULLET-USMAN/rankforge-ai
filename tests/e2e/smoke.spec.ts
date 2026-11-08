@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("RankForge AI — Phase 3 Master Smoke Suite", () => {
+test.describe("RankForge AI — Phase 4 Master Smoke Suite", () => {
   test("1. Landing page renders branding, tagline, and launch action", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveTitle(/RankForge AI/i);
@@ -124,13 +124,13 @@ test.describe("RankForge AI — Phase 3 Master Smoke Suite", () => {
   test("11. Technical Audits page renders target URL input and preflight runner", async ({ page }) => {
     await page.goto("/dashboard/audits");
     await expect(page.getByRole("heading", { name: /Technical SEO Audits/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Run Preflight Audit/i })).toBeVisible();
+    await expect(page.getByText(/Audit Engine \(Phase 4\)/i)).toBeVisible();
 
     // Capture screenshot
     await page.screenshot({ path: "test-results/screenshots/desktop-audits-page.png", fullPage: true });
   });
 
-  test("12. Phase 3 website verification & crawler detail page renders fallback view", async ({ page }) => {
+  test("12. Phase 4 website verification & crawler detail page renders fallback view", async ({ page }) => {
     await page.goto("/dashboard/websites/demo-test-site");
     await expect(page.getByRole("heading", { name: /Website Project Not Found/i })).toBeVisible();
     await expect(page.getByRole("link", { name: /Back to Websites/i })).toBeVisible();
@@ -139,7 +139,7 @@ test.describe("RankForge AI — Phase 3 Master Smoke Suite", () => {
     await page.screenshot({ path: "test-results/screenshots/desktop-website-detail-fallback.png" });
   });
 
-  test("13. Phase 3 roadmap pages render clear status", async ({ page }) => {
+  test("13. Roadmap pages render clear status", async ({ page }) => {
     await page.goto("/dashboard/billing");
     await expect(page.getByRole("heading", { name: /Subscription & Usage/i })).toBeVisible();
     await page.screenshot({ path: "test-results/screenshots/desktop-billing-page.png", fullPage: true });
