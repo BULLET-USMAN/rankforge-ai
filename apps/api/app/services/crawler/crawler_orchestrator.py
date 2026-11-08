@@ -5,7 +5,7 @@ Coordinates crawl job execution:
 - Fetches and evaluates robots.txt
 - Discovers and parses sitemaps
 - Manages BFS frontier traversal and politeness pacing
-- Records crawled page metadata and links
+- Records crawled page metadata, headings, images, structured data, and links
 - Supports cancellation checkpoints and real-time progress updates
 """
 
@@ -171,7 +171,11 @@ class CrawlerOrchestrator:
                     response_time_ms=0.0,
                     depth=item.depth,
                     discovery_method=item.discovery_method,
-                    error_details="Blocked by robots.txt directive"
+                    error_details="Blocked by robots.txt directive",
+                    headings_json={},
+                    images_json=[],
+                    structured_data_json=[],
+                    redirect_chain_json=[],
                 )
                 self.db.add(blocked_page)
                 job.pages_blocked += 1
@@ -194,6 +198,11 @@ class CrawlerOrchestrator:
                     byte_size=fetch_res.byte_size,
                     depth=item.depth,
                     discovery_method=item.discovery_method,
+                    x_robots_tag=fetch_res.x_robots_tag,
+                    redirect_chain_json=fetch_res.redirect_chain,
+                    headings_json={},
+                    images_json=[],
+                    structured_data_json=[],
                     error_details=fetch_res.error_details or f"HTTP {fetch_res.status_code}"
                 )
                 self.db.add(failed_page)
@@ -216,6 +225,11 @@ class CrawlerOrchestrator:
                     byte_size=fetch_res.byte_size,
                     depth=item.depth,
                     discovery_method=item.discovery_method,
+                    x_robots_tag=fetch_res.x_robots_tag,
+                    redirect_chain_json=fetch_res.redirect_chain,
+                    headings_json={},
+                    images_json=[],
+                    structured_data_json=[],
                     error_details=f"Skipped non-HTML content type: {fetch_res.content_type}"
                 )
                 self.db.add(non_html_page)
@@ -245,7 +259,14 @@ class CrawlerOrchestrator:
                 meta_description=parsed.meta_description,
                 canonical_url=parsed.canonical_url,
                 meta_robots=parsed.meta_robots,
+                x_robots_tag=fetch_res.x_robots_tag,
                 h1_count=parsed.h1_count,
+                headings_json=parsed.headings_json,
+                images_count=parsed.images_count,
+                images_missing_alt_count=parsed.images_missing_alt_count,
+                images_json=parsed.images_json,
+                structured_data_json=parsed.structured_data_json,
+                redirect_chain_json=fetch_res.redirect_chain,
                 internal_links_count=parsed.internal_links_count,
                 external_links_count=parsed.external_links_count,
                 links_json=parsed.links_detail,
@@ -258,7 +279,8 @@ class CrawlerOrchestrator:
 
             # Discover and enqueue internal links
             meta_robots_lower = (parsed.meta_robots or "").lower()
-            if "nofollow" not in meta_robots_lower and item.depth < job.max_depth:
+            x_robots_lower = (fetch_res.x_robots_tag or "").lower()
+            if "nofollow" not in meta_robots_lower and "nofollow" not in x_robots_lower and item.depth < job.max_depth:
                 for link in parsed.internal_links:
                     is_crawlable, _ = UrlNormalizer.is_crawlable_resource(link)
                     if is_crawlable:

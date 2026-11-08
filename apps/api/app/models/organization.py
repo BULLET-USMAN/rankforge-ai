@@ -1,3 +1,5 @@
+"""Organization database model."""
+
 from __future__ import annotations
 
 from typing import List, Optional
@@ -10,7 +12,7 @@ from app.db.base import Base
 
 class Organization(Base):
     """
-    Tenant isolation boundary. All website projects, crawl jobs, audit jobs,
+    Tenant isolation boundary. All website projects, crawl jobs, audit runs,
     recommendations, invitations, and billing belong to an organization.
     """
     __tablename__ = "organizations"
@@ -34,6 +36,9 @@ class Organization(Base):
     )
     crawl_jobs: Mapped[List["CrawlJob"]] = relationship(
         "CrawlJob", back_populates="organization", cascade="all, delete-orphan"
+    )
+    audit_runs: Mapped[List["SEOAuditRun"]] = relationship(
+        "SEOAuditRun", back_populates="organization", cascade="all, delete-orphan"
     )
     audit_jobs: Mapped[List["AuditJob"]] = relationship(
         "AuditJob", back_populates="organization", cascade="all, delete-orphan"

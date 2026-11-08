@@ -9,6 +9,10 @@ Protects against:
 - DNS rebinding attacks via per-hop pre-connection DNS validation
 - Redirect loops and redirect hops to private destinations
 - Response size budget exhaustion (HTML, sitemaps, verification files)
+Captures:
+- Status code, latency, headers, content type, byte size
+- X-Robots-Tag response header
+- Redirect chain hops
 """
 
 from __future__ import annotations
@@ -17,7 +21,7 @@ import ipaddress
 import logging
 import socket
 import time
-from typing import Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import urljoin, urlparse
 
 import httpx
@@ -81,6 +85,8 @@ class SafeFetchResult:
         byte_size: int = 0,
         error_details: Optional[str] = None,
         final_url: Optional[str] = None,
+        x_robots_tag: Optional[str] = None,
+        redirect_chain: Optional[List[Dict[str, Any]]] = None,
     ):
         self.is_success = is_success
         self.status_code = status_code
@@ -90,6 +96,8 @@ class SafeFetchResult:
         self.byte_size = byte_size
         self.error_details = error_details
         self.final_url = final_url
+        self.x_robots_tag = x_robots_tag
+        self.redirect_chain = redirect_chain if redirect_chain is not None else []
 
     @property
     def text(self) -> str:
@@ -207,6 +215,7 @@ class SafeHttpFetcher:
         budget = max_size_bytes if max_size_bytes is not None else (max_bytes if max_bytes is not None else MAX_HTML_BYTES)
         current_url = url
         redirects_followed = 0
+        redirect_chain: List[Dict[str, Any]] = []
         start_time = time.time()
 
         try:
@@ -249,7 +258,13 @@ class SafeHttpFetcher:
                         if not location:
                             raise SafeFetchError("Received redirect status code without Location header.")
 
-                        current_url = urljoin(current_url, location)
+                        next_url = urljoin(current_url, location)
+                        redirect_chain.append({
+                            "from_url": current_url,
+                            "to_url": next_url,
+                            "status_code": response.status_code,
+                        })
+                        current_url = next_url
                         redirects_followed += 1
                         continue
 
@@ -259,6 +274,8 @@ class SafeHttpFetcher:
                         )
 
                     elapsed_ms = (time.time() - start_time) * 1000.0
+                    x_robots_tag = response.headers.get("x-robots-tag")
+
                     return SafeFetchResult(
                         is_success=(response.status_code < 400),
                         status_code=response.status_code,
@@ -267,6 +284,8 @@ class SafeHttpFetcher:
                         content_type=response.headers.get("content-type"),
                         byte_size=len(response.content),
                         final_url=current_url,
+                        x_robots_tag=x_robots_tag,
+                        redirect_chain=redirect_chain,
                     )
 
         except Exception as exc:
@@ -277,6 +296,7 @@ class SafeHttpFetcher:
                 response_time_ms=round(elapsed_ms, 2),
                 error_details=str(exc),
                 final_url=current_url,
+                redirect_chain=redirect_chain,
             )
 
     @classmethod
@@ -294,6 +314,7 @@ class SafeHttpFetcher:
         budget = max_size_bytes if max_size_bytes is not None else (max_bytes if max_bytes is not None else MAX_HTML_BYTES)
         current_url = url
         redirects_followed = 0
+        redirect_chain: List[Dict[str, Any]] = []
         start_time = time.time()
 
         try:
@@ -336,7 +357,13 @@ class SafeHttpFetcher:
                         if not location:
                             raise SafeFetchError("Received redirect status code without Location header.")
 
-                        current_url = urljoin(current_url, location)
+                        next_url = urljoin(current_url, location)
+                        redirect_chain.append({
+                            "from_url": current_url,
+                            "to_url": next_url,
+                            "status_code": response.status_code,
+                        })
+                        current_url = next_url
                         redirects_followed += 1
                         continue
 
@@ -346,6 +373,8 @@ class SafeHttpFetcher:
                         )
 
                     elapsed_ms = (time.time() - start_time) * 1000.0
+                    x_robots_tag = response.headers.get("x-robots-tag")
+
                     return SafeFetchResult(
                         is_success=(response.status_code < 400),
                         status_code=response.status_code,
@@ -354,6 +383,8 @@ class SafeHttpFetcher:
                         content_type=response.headers.get("content-type"),
                         byte_size=len(response.content),
                         final_url=current_url,
+                        x_robots_tag=x_robots_tag,
+                        redirect_chain=redirect_chain,
                     )
 
         except Exception as exc:
@@ -364,4 +395,5 @@ class SafeHttpFetcher:
                 response_time_ms=round(elapsed_ms, 2),
                 error_details=str(exc),
                 final_url=current_url,
+                redirect_chain=redirect_chain,
             )

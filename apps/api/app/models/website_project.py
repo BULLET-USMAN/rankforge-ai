@@ -1,3 +1,5 @@
+"""WebsiteProject database model."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -31,6 +33,7 @@ class WebsiteProject(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     verification_status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
     verification_token: Mapped[str] = mapped_column(String(128), nullable=False)
+    last_crawl_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     archived_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     organization: Mapped["Organization"] = relationship("Organization", back_populates="projects")
@@ -46,6 +49,9 @@ class WebsiteProject(Base):
     )
     sitemaps: Mapped[List["SitemapDocument"]] = relationship(
         "SitemapDocument", back_populates="project", cascade="all, delete-orphan"
+    )
+    audit_runs: Mapped[List["SEOAuditRun"]] = relationship(
+        "SEOAuditRun", back_populates="project", cascade="all, delete-orphan"
     )
     audit_jobs: Mapped[List["AuditJob"]] = relationship(
         "AuditJob", back_populates="project", cascade="all, delete-orphan"

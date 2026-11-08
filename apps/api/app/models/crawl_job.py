@@ -1,3 +1,5 @@
+"""CrawlJob database model."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -47,4 +49,7 @@ class CrawlJob(Base):
     )
     sitemaps: Mapped[List["SitemapDocument"]] = relationship(
         "SitemapDocument", back_populates="job", cascade="all, delete-orphan"
+    )
+    audit_runs: Mapped[List["SEOAuditRun"]] = relationship(
+        "SEOAuditRun", back_populates="crawl_job", cascade="all, delete-orphan"
     )

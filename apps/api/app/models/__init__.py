@@ -8,6 +8,10 @@ from app.models.organization import Organization
 from app.models.organization_invitation import OrganizationInvitation
 from app.models.organization_member import OrganizationMember
 from app.models.profile import Profile
+from app.models.seo_audit_category_score import SEOAuditCategoryScore
+from app.models.seo_audit_comparison import SEOAuditComparison
+from app.models.seo_audit_finding import SEOAuditFinding
+from app.models.seo_audit_run import SEOAuditRun
 from app.models.seo_recommendation import SEORecommendation
 from app.models.sitemap_document import SitemapDocument
 from app.models.subscription import Subscription
@@ -26,6 +30,10 @@ __all__ = [
     "CrawlJob",
     "CrawledPage",
     "SitemapDocument",
+    "SEOAuditRun",
+    "SEOAuditFinding",
+    "SEOAuditCategoryScore",
+    "SEOAuditComparison",
     "AuditJob",
     "AuditResult",
     "SEORecommendation",

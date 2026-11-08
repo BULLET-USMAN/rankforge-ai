@@ -1,3 +1,5 @@
+"""CrawledPage database model."""
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
@@ -36,8 +38,18 @@ class CrawledPage(Base):
     meta_description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     canonical_url: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
     meta_robots: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    x_robots_tag: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     h1_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    headings_json: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
+
+    images_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    images_missing_alt_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    images_json: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+
+    structured_data_json: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    redirect_chain_json: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+
     internal_links_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     external_links_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     links_json: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
