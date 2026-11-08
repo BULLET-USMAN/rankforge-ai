@@ -1,0 +1,28 @@
+{
+  "name": "rankforge-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "RankForge AI — Production-Oriented SEO Intelligence & Automation Platform",
+  "workspaces": [
+    "apps/web",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=apps/web",
+    "build": "npm run build --workspace=apps/web",
+    "start": "npm run start --workspace=apps/web",
+    "typecheck": "npm run typecheck --workspace=apps/web",
+    "lint": "npm run lint --workspace=apps/web",
+    "test": "npm run test --workspace=apps/web",
+    "test:e2e": "playwright test",
+    "test:backend": "powershell -ExecutionPolicy Bypass -File scripts/run_backend_tests.ps1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "prettier": "^3.3.3"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
