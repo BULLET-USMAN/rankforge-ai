@@ -133,12 +133,88 @@ export interface WebsiteProject {
   primary_url: string;
   description?: string | null;
   is_verified: boolean;
-  verification_status: "pending" | "verified" | "failed";
+  verification_status: "pending" | "verified" | "failed" | "revoked" | "expired";
   verification_token: string;
   created_by?: string | null;
   archived_at?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface VerificationStatus {
+  project_id: string;
+  domain: string;
+  method: string;
+  status: "pending" | "verified" | "failed" | "revoked" | "expired";
+  token?: string | null;
+  txt_record_name?: string | null;
+  txt_record_value?: string | null;
+  file_path?: string | null;
+  file_content?: string | null;
+  last_checked_at?: string | null;
+  failure_reason?: string | null;
+  expires_at?: string | null;
+  verified_at?: string | null;
+}
+
+export interface VerificationCheckResult {
+  is_verified: boolean;
+  status: string;
+  message: string;
+  failure_reason?: string | null;
+  verified_at?: string | null;
+}
+
+export interface CrawlJob {
+  id: string;
+  project_id: string;
+  organization_id: string;
+  status: "queued" | "running" | "completed" | "partially_completed" | "failed" | "cancelled";
+  celery_task_id?: string | null;
+  pages_crawled: number;
+  pages_discovered: number;
+  pages_failed: number;
+  pages_blocked: number;
+  max_pages: number;
+  max_depth: number;
+  started_at?: string | null;
+  completed_at?: string | null;
+  error_message?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CrawledPage {
+  id: string;
+  job_id: string;
+  project_id: string;
+  url: string;
+  normalized_url: string;
+  status_code: number;
+  response_time_ms: number;
+  content_type?: string | null;
+  byte_size: number;
+  depth: number;
+  discovery_method: string;
+  title?: string | null;
+  meta_description?: string | null;
+  canonical_url?: string | null;
+  meta_robots?: string | null;
+  h1_count: number;
+  internal_links_count: number;
+  external_links_count: number;
+  content_hash?: string | null;
+  error_details?: string | null;
+  created_at: string;
+}
+
+export interface CrawledPageDetail extends CrawledPage {
+  links_json: Array<{
+    url: string;
+    type: "internal" | "external";
+    text?: string;
+    rel?: string;
+  }>;
 }
 
 export const api = {
@@ -210,7 +286,7 @@ export const api = {
       body: JSON.stringify(payload),
     }),
 
-  // Website Projects (Phase 2 Workspace-scoped)
+  // Website Projects (Workspace-scoped)
   listWebsites: (orgId: string, search?: string, includeArchived?: boolean) => {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
@@ -245,6 +321,78 @@ export const api = {
     request<null>(`/api/v1/organizations/${orgId}/websites/${websiteId}`, {
       method: "DELETE",
     }),
+
+  // Domain Verification (Phase 3)
+  getVerificationStatus: (orgId: string, websiteId: string, method: string = "dns_txt") =>
+    request<VerificationStatus>(
+      `/api/v1/organizations/${orgId}/websites/${websiteId}/verification?method=${encodeURIComponent(method)}`
+    ),
+  initiateVerification: (orgId: string, websiteId: string, method: string = "dns_txt") =>
+    request<VerificationStatus>(
+      `/api/v1/organizations/${orgId}/websites/${websiteId}/verification/initiate`,
+      {
+        method: "POST",
+        body: JSON.stringify({ method }),
+      }
+    ),
+  checkVerification: (orgId: string, websiteId: string, method: string = "dns_txt") =>
+    request<VerificationCheckResult>(
+      `/api/v1/organizations/${orgId}/websites/${websiteId}/verification/check?method=${encodeURIComponent(method)}`,
+      {
+        method: "POST",
+      }
+    ),
+  revokeVerification: (orgId: string, websiteId: string) =>
+    request<VerificationCheckResult>(
+      `/api/v1/organizations/${orgId}/websites/${websiteId}/verification/revoke`,
+      {
+        method: "POST",
+      }
+    ),
+
+  // Website Crawler (Phase 3)
+  startCrawl: (
+    orgId: string,
+    websiteId: string,
+    payload: { max_pages?: number; max_depth?: number } = {}
+  ) =>
+    request<CrawlJob>(`/api/v1/organizations/${orgId}/websites/${websiteId}/crawls`, {
+      method: "POST",
+      body: JSON.stringify({
+        max_pages: payload.max_pages ?? 50,
+        max_depth: payload.max_depth ?? 3,
+      }),
+    }),
+  listCrawls: (orgId: string, websiteId: string, skip: number = 0, limit: number = 20) =>
+    request<{ items: CrawlJob[]; total: number }>(
+      `/api/v1/organizations/${orgId}/websites/${websiteId}/crawls?skip=${skip}&limit=${limit}`
+    ),
+  getCrawlJob: (orgId: string, jobId: string) =>
+    request<CrawlJob>(`/api/v1/organizations/${orgId}/crawls/${jobId}`),
+  cancelCrawlJob: (orgId: string, jobId: string) =>
+    request<CrawlJob>(`/api/v1/organizations/${orgId}/crawls/${jobId}/cancel`, {
+      method: "POST",
+    }),
+  listCrawledPages: (
+    orgId: string,
+    jobId: string,
+    params: { search?: string; status_filter?: string; page?: number; page_size?: number } = {}
+  ) => {
+    const query = new URLSearchParams();
+    if (params.search) query.set("search", params.search);
+    if (params.status_filter) query.set("status_filter", params.status_filter);
+    if (params.page) query.set("page", params.page.toString());
+    if (params.page_size) query.set("page_size", params.page_size.toString());
+    const qs = query.toString();
+    return request<{
+      items: CrawledPage[];
+      total: number;
+      page: number;
+      page_size: number;
+    }>(`/api/v1/organizations/${orgId}/crawls/${jobId}/pages${qs ? `?${qs}` : ""}`);
+  },
+  getCrawledPageDetail: (orgId: string, jobId: string, pageId: string) =>
+    request<CrawledPageDetail>(`/api/v1/organizations/${orgId}/crawls/${jobId}/pages/${pageId}`),
 
   // Phase 1 Legacy Compatibility
   listProjects: (organizationId?: string) => {

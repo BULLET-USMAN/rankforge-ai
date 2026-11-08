@@ -38,6 +38,15 @@ class WebsiteProject(Base):
     verifications: Mapped[List["WebsiteVerification"]] = relationship(
         "WebsiteVerification", back_populates="project", cascade="all, delete-orphan"
     )
+    crawl_jobs: Mapped[List["CrawlJob"]] = relationship(
+        "CrawlJob", back_populates="project", cascade="all, delete-orphan"
+    )
+    crawled_pages: Mapped[List["CrawledPage"]] = relationship(
+        "CrawledPage", back_populates="project", cascade="all, delete-orphan"
+    )
+    sitemaps: Mapped[List["SitemapDocument"]] = relationship(
+        "SitemapDocument", back_populates="project", cascade="all, delete-orphan"
+    )
     audit_jobs: Mapped[List["AuditJob"]] = relationship(
         "AuditJob", back_populates="project", cascade="all, delete-orphan"
     )
