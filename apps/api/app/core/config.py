@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -10,16 +10,18 @@ class Settings(BaseSettings):
     Loads from environment variables or falls back to secure defaults.
     """
     PROJECT_NAME: str = "RankForge AI API"
-    VERSION: str = "0.1.0"
+    VERSION: str = "0.2.0"
     ENVIRONMENT: str = "development"
     DEBUG: bool = False
     API_V1_STR: str = "/api/v1"
 
-    # Security
+    # Security & JWT
     SECRET_KEY: str = "rf_dev_secret_key_change_in_production_894172498172938471"
     ALLOWED_ORIGINS: List[str] = [
         "http://localhost:3000",
+        "http://localhost:3002",
         "http://127.0.0.1:3000",
+        "http://127.0.0.1:3002",
         "http://localhost:8000",
     ]
 
@@ -31,6 +33,14 @@ class Settings(BaseSettings):
         elif isinstance(v, (list, str)):
             return v  # type: ignore
         raise ValueError(v)
+
+    # Supabase Configuration
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_ANON_KEY: Optional[str] = None
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    SUPABASE_JWT_SECRET: Optional[str] = None
+    SUPABASE_JWT_AUDIENCE: str = "authenticated"
+    SUPABASE_JWT_ISSUER: Optional[str] = None
 
     # Database
     DATABASE_URL: str = (
@@ -47,6 +57,9 @@ class Settings(BaseSettings):
     CRAWLER_TIMEOUT_SECONDS: float = 10.0
     CRAWLER_MAX_REDIRECTS: int = 3
     MAX_REQUEST_BODY_BYTES: int = 2 * 1024 * 1024  # 2MB request body safeguard
+
+    # Invitation settings
+    INVITATION_EXPIRY_DAYS: int = 7
 
     model_config = SettingsConfigDict(
         env_file=".env",

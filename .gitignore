@@ -33,6 +33,7 @@ htmlcov/
 out/
 build/
 dist/
+*.tsbuildinfo
 
 # Testing & Playwright
 test-results/

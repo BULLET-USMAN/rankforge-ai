@@ -1,6 +1,8 @@
-from typing import List
+from __future__ import annotations
 
-from sqlalchemy import String
+from typing import List, Optional
+
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -9,16 +11,23 @@ from app.db.base import Base
 class Organization(Base):
     """
     Tenant isolation boundary. All website projects, audit jobs,
-    recommendations, and billing belong to an organization.
+    recommendations, invitations, and billing belong to an organization.
     """
     __tablename__ = "organizations"
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(100), unique=True, index=True, nullable=False)
     plan_tier: Mapped[str] = mapped_column(String(50), default="starter", nullable=False)
+    created_by: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True
+    )
 
+    creator: Mapped[Optional["Profile"]] = relationship("Profile", foreign_keys=[created_by])
     members: Mapped[List["OrganizationMember"]] = relationship(
         "OrganizationMember", back_populates="organization", cascade="all, delete-orphan"
+    )
+    invitations: Mapped[List["OrganizationInvitation"]] = relationship(
+        "OrganizationInvitation", back_populates="organization", cascade="all, delete-orphan"
     )
     projects: Mapped[List["WebsiteProject"]] = relationship(
         "WebsiteProject", back_populates="organization", cascade="all, delete-orphan"

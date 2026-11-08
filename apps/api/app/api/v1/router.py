@@ -1,15 +1,30 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import audits, organizations, projects, worker
+from app.api.v1.endpoints import (
+    audits,
+    invitations,
+    me,
+    members,
+    organizations,
+    projects,
+    websites,
+    worker,
+)
 
 api_router = APIRouter()
 
-# Health endpoints at root level (/health/live, /health/ready)
+# Authenticated profile
+api_router.include_router(me.router, prefix="/me", tags=["Profile"])
+
 # Organizations
 api_router.include_router(organizations.router, prefix="/organizations", tags=["Organizations"])
-# Projects
+
+# Organization-scoped resources (Members, Websites, Invitations)
+api_router.include_router(members.router, tags=["Workspace Members"])
+api_router.include_router(websites.router, tags=["Website Projects"])
+api_router.include_router(invitations.router, tags=["Invitations"])
+
+# Phase 1 Legacy routes (Projects, Audits, Worker) preserved for backward compatibility
 api_router.include_router(projects.router, prefix="/projects", tags=["Projects"])
-# Audits
 api_router.include_router(audits.router, prefix="/audits", tags=["Audits"])
-# Worker
 api_router.include_router(worker.router, prefix="/worker", tags=["Worker"])

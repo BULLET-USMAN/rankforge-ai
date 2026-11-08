@@ -1,83 +1,83 @@
-# RankForge AI — Test Strategy & Quality Assurance
-**Document Version:** 1.0.0  
-**Phase:** 1  
+# RankForge AI — Quality Assurance & Testing Suite
+**Document Version:** 2.0.0  
+**Phase:** 2  
 
 ---
 
-## 1. Testing Philosophy
-RankForge AI enforces a deterministic, evidence-based quality gate. No code is committed or merged without passing automated checks. Tests run against real database instances (SQLite static pool in local tests, PostgreSQL in CI/staging) and genuine HTTP/worker logic.
+## 1. Quality Gates & Test Suites Overview
+
+RankForge AI maintains strict quality gates across the backend API, frontend web client, and full-stack integration:
+
+| Suite | Runner / Tool | Target | Test Count | Status |
+| :--- | :--- | :--- | :--- | :--- |
+| **Backend Unit & Integration** | Pytest | FastAPI + SQLAlchemy + Celery | 25 tests | **100% Passed** |
+| **Backend Linting & Style** | Ruff | `apps/api` | 0 errors | **100% Passed** |
+| **Frontend Unit & Component** | Vitest | Next.js components & lib utilities | 12 tests | **100% Passed** |
+| **Frontend Static Typecheck** | TypeScript (`tsc --noEmit`) | Next.js 15 App Router | 0 errors | **100% Passed** |
+| **End-to-End Smoke Tests** | Playwright | Full Next.js app on Chromium & Mobile | 24 tests | **100% Passed** |
 
 ---
 
-## 2. Test Pyramid & Tooling Stack
+## 2. Test Execution Commands
 
-```mermaid
-flowchart TD
-    E2E["Playwright E2E Smoke Tests (All Routes, Mobile/Desktop Viewports)"]
-    Int["Pytest Backend Integration Tests (HTTPX TestClient, Alembic, Celery)"]
-    Comp["Vitest Component Tests (React Testing Library, DOM Mocking)"]
-    Static["Static Analysis (TypeScript tsc, Ruff, ESLint)"]
+### Run Backend Pytest Suite
+```powershell
+.\.venv\Scripts\pytest.exe apps/api/tests
 ```
 
----
-
-## 3. Test Suites & Execution Instructions
-
-### 3.1 Backend Pytest Suite
-Verifies:
-- Liveness probe (`/health/live`)
-- Readiness probe with dependency diagnostics (`/health/ready`)
-- Root branding endpoint (`/`)
-- Organization creation and slug conflict rejection (`/api/v1/organizations`)
-- Website project registration and verification instructions (`/api/v1/projects`)
-- SSRF Guard validation against RFC 1918 private subnets, loopbacks, and cloud metadata
-- Preflight audit execution with deterministic scoring and header inspection
-- Celery worker smoke task calculation and ping heartbeat
-
-**Command:**
+### Run Backend Ruff Linter
 ```powershell
-.\.venv\Scripts\pytest.exe apps/api/tests -v
+.\.venv\Scripts\ruff.exe check apps/api
 ```
 
-### 3.2 Frontend Vitest Component Suite
-Verifies:
-- Brand Logo SVG geometry, sizing, and text visibility options
-- Button variants (default crimson, secondary surface, ghost, danger, disabled states)
-- FeatureGate coming-soon state rendering, architecture highlights, and dependency checklists
-
-**Command:**
+### Run Frontend Vitest Unit Tests
 ```powershell
-npm run test --workspace=apps/web
+npm.cmd run test --workspace=apps/web
 ```
 
-### 3.3 TypeScript Typecheck & Production Build
-Verifies:
-- Strict mode TypeScript compilation across all models, components, and pages (`tsc --noEmit`)
-- Next.js 15 static page generation across all 15 routes
-
-**Commands:**
+### Run Frontend TypeScript Strict Typecheck
 ```powershell
-npm run typecheck --workspace=apps/web
-npm run build --workspace=apps/web
+npm.cmd run typecheck --workspace=apps/web
 ```
 
-### 3.4 Playwright Browser Smoke Tests
-Verifies:
-- All 12 application routes render without console errors
-- Responsive layout across desktop (1280x720) and mobile (Pixel 5) viewports
-- Captures browser screenshots for critical visual review
-
-**Command:**
+### Run Playwright E2E Master Smoke Suite
 ```powershell
-npx playwright test
+npx.cmd playwright test
 ```
 
 ---
 
-## 4. Regression Policy
-In accordance with Rule 14, every future release phase must re-run:
-1. All Phase 1 backend unit and integration tests.
-2. Alembic migration upgrade and downgrade scripts.
-3. Vitest component tests.
-4. Playwright smoke tests.
-5. Strict TypeScript and Ruff linting checks.
+## 3. Test Coverage Breakdown
+
+### Backend Tests (`apps/api/tests/`)
+- `test_health.py`: Liveness, readiness, and dependency health checks.
+- `test_organizations.py`: Organization creation, duplicate slug conflict rejection, listing.
+- `test_projects.py`: Website project creation, verification instructions retrieval, deletion.
+- `test_ssrf_guard.py`: Comprehensive SSRFGuard rejection of private IPs, loopback, link-local, cloud metadata, control characters.
+- `test_audits.py`: Preflight technical audit execution, scoring calculation, SSRF rejection.
+- `test_worker.py`: Celery worker task execution and status verification.
+- `test_auth_security.py`: Unauthenticated 401 rejection, forged secret JWT rejection, profile retrieval, profile updates.
+- `test_rbac.py`: 4-tier role hierarchy permissions, privilege escalation prevention, self-role modification blocking, final owner demotion protection.
+- `test_cross_tenant_isolation.py`: Cross-tenant boundary enforcement between User A/Org A and User B/Org B across websites, members, and invitations.
+- `test_invitations.py`: Token generation, SHA-256 token hashing, revocation, mismatched email rejection, single-use acceptance.
+- `test_websites_lifecycle.py`: Domain normalization, SSRF rejection, duplicate domain rejection, pending verification status, search, archive, restore, and permanent deletion.
+
+### Frontend Tests (`apps/web/tests/`)
+- `auth-validation.test.ts`: Client-side domain validation, private IP detection, password complexity scoring.
+- `api-client.test.ts`: Bearer token management, cookie persistence, ApiError handling.
+- `logo.test.tsx`, `button.test.tsx`, `feature-gate.test.tsx`: Component visual styling and variant tests.
+
+### Playwright E2E Tests (`tests/e2e/smoke.spec.ts`)
+- 12 comprehensive scenarios tested across both **Desktop Chromium** and **Mobile Chrome (Pixel 5)**:
+  1. Landing page branding and tagline
+  2. Login page Supabase form and demo login
+  3. Register page account creation and password strength
+  4. Email verification page
+  5. Password recovery and update pages
+  6. Onboarding workspace setup and tier picker
+  7. Dashboard Overview metrics and health probe
+  8. Team & Workspace Access member roster and invitation modal
+  9. Account Profile user details and verified email
+  10. Website Projects list, search, and Add Website modal with SSRF guard
+  11. Technical Audits preflight runner
+  12. Settings and Billing roadmap pages

@@ -50,7 +50,25 @@ def db_session():
 
 @pytest.fixture
 def client(db_session):
-    """Provides a TestClient with overridden get_db dependency."""
+    """Provides a TestClient with overridden get_db dependency and default test auth."""
+    def override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+
+    app.dependency_overrides[get_db] = override_get_db
+    with TestClient(
+        app,
+        headers={"Authorization": "Bearer dev_token_usr_default_test@rankforge.ai"},
+    ) as test_client:
+        yield test_client
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def unauthenticated_client(db_session):
+    """Provides an unauthenticated TestClient with overridden get_db."""
     def override_get_db():
         try:
             yield db_session

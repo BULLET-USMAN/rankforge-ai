@@ -1,65 +1,50 @@
-# RankForge AI — Security Architecture & SSRF Guard Specification
-**Document Version:** 1.0.0  
-**Phase:** 1  
-**Classification:** DevSecOps Specification  
+# RankForge AI — Security Architecture & Hardening
+**Document Version:** 2.0.0  
+**Phase:** 2  
 
 ---
 
-## 1. Security Philosophy
-RankForge AI handles website telemetry, external HTTP inspections, and multi-tenant search intelligence. The platform is designed with default-deny network postures, zero client-side credential persistence, and defense-in-depth isolation between tenants.
+## 1. Authentication Security & JWT Verification
+The FastAPI backend strictly enforces cryptographic validation of all inbound authentication tokens.
+- **Never Trust Client Claims**: Raw unverified JWT strings from headers or cookies are never accepted.
+- **Signature Verification**:
+  - HMAC-SHA256 (`HS256`) checked against `SUPABASE_JWT_SECRET`.
+  - Asymmetric keys (`RS256`, `ES256`) validated against Supabase JWKS with cached key retrieval and rotation.
+- **Claim Enforcement**: Validates standard claims:
+  - `exp`: Reject expired signatures.
+  - `aud`: Require `authenticated` audience.
+  - `sub`: Require valid user UUID matching `profiles.id`.
 
 ---
 
-## 2. Server-Side Request Forgery (SSRF) Defense Architecture
-
-A major risk in SEO crawlers and audit tools is Server-Side Request Forgery (SSRF), where an attacker enters an internal IP, cloud metadata endpoint, or internal microservice hostname to pivot into internal networks.
-
-RankForge AI implements strict pre-flight and run-time validation via `SSRFGuard`:
-
-```mermaid
-flowchart TD
-    Inbound["User Requests Audit for Target URL"] --> Parse["URL Parser & Scheme Verification"]
-    Parse -->|Non-HTTP(S)| RejectScheme["REJECT: Prohibited Scheme"]
-    Parse -->|HTTP/HTTPS| Resolve["DNS Resolution (AF_UNSPEC, SOCK_STREAM)"]
-    
-    Resolve --> CheckIP["IP Address Range Validation"]
-    CheckIP -->|RFC 1918 Private (10.x, 172.16.x, 192.168.x)| BlockPrivate["REJECT: Private Subnet (RFC 1918)"]
-    CheckIP -->|Loopback (127.x, ::1, 0.0.0.0)| BlockLoopback["REJECT: Loopback Target"]
-    CheckIP -->|Link-Local / Metadata (169.254.169.254)| BlockMetadata["REJECT: Cloud Metadata Service"]
-    CheckIP -->|Multicast / Reserved / Unspecified| BlockReserved["REJECT: Reserved Network Address"]
-    
-    CheckIP -->|Public IPv4/IPv6| CheckPort["Public Port Whitelist (80, 443, 8080, 8443)"]
-    CheckPort -->|Non-Standard Port| BlockPort["REJECT: Non-Standard Port Prohibited"]
-    CheckPort -->|Allowed Port| Dispatch["Execute Safe Request via Async HTTP Client"]
-```
-
-### 2.1 Mitigation Checklist
-
-| Threat Vector | Mitigation Strategy in RankForge AI |
-| :--- | :--- |
-| **Private Subnet Access** | Blocks RFC 1918 ranges (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`) via `ipaddress.ip_address(ip).is_private`. |
-| **Loopback Exploitation** | Rejects `127.0.0.0/8`, `localhost`, `0.0.0.0`, and `::1`. |
-| **Cloud Metadata Theft** | Explicitly blocks `169.254.169.254`, `metadata.google.internal`, and `instance-data`. |
-| **DNS Rebinding** | Resolves socket address immediately prior to request execution; validates every resolved IP address in multi-homed records. |
-| **Redirect Hijacking** | Limits redirects to `max_redirects=3`. In future crawler phases, redirects will be intercepted and re-validated against `SSRFGuard`. |
-| **Response Memory Exhaustion** | Enforces hard byte limit (5MB ceiling) on streamed response payloads. |
-| **Request Timeouts** | Enforces strict 10-second timeout ceiling to mitigate slowloris connection exhaustion. |
-| **Non-HTTP Protocols** | Disallows `file://`, `gopher://`, `ftp://`, `ldap://`, `dict://`. Only `http://` and `https://` are permitted. |
-| **Robots.txt & Authorization** | Respects target website `robots.txt` disallow directives and requires domain ownership verification prior to automated remediation. |
+## 2. Multi-Tenant Cross-Isolation Guarantees
+1. **Endpoint-Level Workspace Verification (`RequireOrgRole`)**:
+   Every tenant-scoped endpoint validates that the caller has an active row in `organization_members` for the specific `org_id` in the request path.
+2. **Resource-Level Tenant Binding**:
+   Database queries for website projects, audit records, and invitations filter on both resource ID AND `organization_id`.
+   Accessing another workspace's resource returns `HTTP 403 Forbidden` or `HTTP 404 Not Found`.
+3. **No Workspace ID Guessing**:
+   Users can only list workspaces they have joined. Workspace enumerations are completely segregated per authenticated profile.
 
 ---
 
-## 3. Multi-Tenant Authorization & Row-Level Security
-- **Tenant Boundaries:** All database models reference an `organization_id` foreign key with cascade deletion.
-- **Supabase Compatibility:** Prepared for Supabase Auth JWT tokens (`auth.uid()`). All queries in Phase 2 are filtered by the authenticated user's organization membership.
-- **Safe Error Formats:** Unhandled exceptions return sanitized JSON payloads (`INTERNAL_SERVER_ERROR`) with a tracking `request_id`. Stack traces and database internals are never returned to the client.
+## 3. Cryptographic Invitation Security
+1. **Token Generation**: Invitations generate a 32-byte cryptographically secure URL-safe token via `secrets.token_urlsafe(32)`.
+2. **Hash-Only Database Storage**: Only the `SHA-256` digest of the token is saved in `organization_invitations.token_hash`. Even if the database is leaked, raw invitation tokens cannot be extracted.
+3. **Strict Expiry & Single-Use**:
+   - Expire after 7 days (`INVITATION_EXPIRY_DAYS = 7`).
+   - Acceptance records `accepted_at = utc_now()`. Re-acceptance is blocked.
+   - Revocation records `revoked_at = utc_now()`. Revoked tokens are blocked.
+4. **Email Recipient Verification**:
+   The accepting user's email address must strictly match `invited_email`. An imposter or mismatched authenticated user cannot hijack the invitation.
 
 ---
 
-## 4. Ingress Protection & HTTP Security Headers
-All HTTP responses from the Next.js frontend and FastAPI backend enforce:
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `X-Request-ID`: UUID for distributed log correlation
-- Parameterized SQL queries via SQLAlchemy 2.0 preventing SQL injection.
+## 4. Domain Normalization & SSRF Defense (`SSRFGuard` & `DomainNormalizer`)
+RankForge AI analyzes external websites. To prevent Server-Side Request Forgery (SSRF), all user-submitted domains and URLs undergo strict validation before persistence:
+- **Private Networks (RFC 1918)**: Rejects `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`.
+- **Loopback & Zero Addresses**: Rejects `127.0.0.1`, `localhost`, `0.0.0.0`, `::1`.
+- **Cloud Metadata Protection**: Strictly blocks `169.254.169.254` (AWS, GCP, Azure metadata services).
+- **Reserved / Internal TLDs**: Blocks `.local`, `.internal`, `.lan`, `.corp`, `.test`, `.invalid`, `.onion`.
+- **Credential Stripping**: Rejects URLs with embedded credentials (`user:pass@host`).
+- **Port Restrictions**: Permits only web ports (80, 443, 8080, 8443).

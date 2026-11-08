@@ -3,6 +3,7 @@ from app.models.activity_log import ActivityLog
 from app.models.audit_job import AuditJob
 from app.models.audit_result import AuditResult
 from app.models.organization import Organization
+from app.models.organization_invitation import OrganizationInvitation
 from app.models.organization_member import OrganizationMember
 from app.models.profile import Profile
 from app.models.seo_recommendation import SEORecommendation
@@ -16,6 +17,7 @@ __all__ = [
     "Profile",
     "Organization",
     "OrganizationMember",
+    "OrganizationInvitation",
     "WebsiteProject",
     "WebsiteVerification",
     "AuditJob",

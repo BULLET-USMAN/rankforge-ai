@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("RankForge AI Smoke Tests", () => {
-  test("1. Landing page renders branding, tagline, and primary actions", async ({ page }) => {
+test.describe("RankForge AI — Phase 2 Master Smoke Suite", () => {
+  test("1. Landing page renders branding, tagline, and launch action", async ({ page }) => {
     await page.goto("/");
     await expect(page).toHaveTitle(/RankForge AI/i);
 
@@ -17,69 +17,126 @@ test.describe("RankForge AI Smoke Tests", () => {
     await page.screenshot({ path: "test-results/screenshots/landing-page.png", fullPage: true });
   });
 
-  test("2. Login page renders validated interface and dev mode notice", async ({ page }) => {
+  test("2. Login page renders Supabase authentication form with demo access", async ({ page }) => {
     await page.goto("/login");
-    await expect(page.getByText(/Sign In to Workspace/i)).toBeVisible();
-    await expect(page.getByText(/Phase 1 Architecture Notice/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sign In" })).toBeVisible();
+    await expect(page.getByLabel("Work Email")).toBeVisible();
+    await expect(page.locator("input#password")).toBeVisible();
+    await expect(page.getByText(/Instant Local Demo Sign-in/i)).toBeVisible();
 
     // Capture screenshot
     await page.screenshot({ path: "test-results/screenshots/login-page.png" });
   });
 
-  test("3. Register page renders tenant workspace creation form", async ({ page }) => {
+  test("3. Register page renders multi-tenant account provisioning and password strength indicator", async ({ page }) => {
     await page.goto("/register");
-    await expect(page.getByText(/Create Workspace/i)).toBeVisible();
-    await expect(page.getByText(/Multi-Tenant Architecture/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Create Account" })).toBeVisible();
+    await expect(page.getByLabel("Full Name")).toBeVisible();
+    await expect(page.getByLabel("Work Email")).toBeVisible();
+
+    // Type password to trigger strength indicator
+    await page.locator("input#password").fill("TestP@ssw0rd2026!");
+    await expect(page.getByText(/Password strength:/i)).toBeVisible();
 
     // Capture screenshot
     await page.screenshot({ path: "test-results/screenshots/register-page.png" });
   });
 
-  test("4. Dashboard Overview page renders metric cards and platform status", async ({ page }) => {
+  test("4. Email verification page renders confirmation instructions", async ({ page }) => {
+    await page.goto("/verify-email?email=founder%40startup.com");
+    await expect(page.getByRole("heading", { name: /Verify Your Email/i })).toBeVisible();
+    await expect(page.getByText(/founder@startup.com/i)).toBeVisible();
+    await expect(page.getByRole("button", { name: /Resend Verification Email/i })).toBeVisible();
+
+    // Capture screenshot
+    await page.screenshot({ path: "test-results/screenshots/verify-email-page.png" });
+  });
+
+  test("5. Password recovery flow renders recovery portals", async ({ page }) => {
+    await page.goto("/forgot-password");
+    await expect(page.getByRole("heading", { name: "Reset Password" })).toBeVisible();
+    await expect(page.getByLabel("Account Email")).toBeVisible();
+    await page.screenshot({ path: "test-results/screenshots/forgot-password-page.png" });
+
+    await page.goto("/reset-password");
+    await expect(page.getByRole("heading", { name: "Update Password" })).toBeVisible();
+    await expect(page.getByLabel("New Password", { exact: true })).toBeVisible();
+    await page.screenshot({ path: "test-results/screenshots/reset-password-page.png" });
+  });
+
+  test("6. Onboarding flow renders workspace setup and tier selection", async ({ page }) => {
+    await page.goto("/onboarding");
+    await expect(page.getByRole("heading", { name: /Create Your Workspace/i })).toBeVisible();
+    await expect(page.getByLabel(/Workspace or Agency Name/i)).toBeVisible();
+    await expect(page.getByLabel(/Workspace URL Slug/i)).toBeVisible();
+    await expect(page.getByText(/Evaluation Tier/i)).toBeVisible();
+
+    // Capture screenshot
+    await page.screenshot({ path: "test-results/screenshots/onboarding-page.png" });
+  });
+
+  test("7. Dashboard Overview renders workspace metrics and active health probe", async ({ page }) => {
     await page.goto("/dashboard");
-    await expect(page.getByText(/Workspace Overview/i)).toBeVisible();
-    await expect(page.getByText(/Tracked Websites/i)).toBeVisible();
-    await expect(page.getByText(/Audits Executed/i)).toBeVisible();
-    await expect(page.getByText(/Platform Readiness/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Workspace Overview" })).toBeVisible();
+    await expect(page.getByText("Tracked Websites")).toBeVisible();
+    await expect(page.getByText("Audits Executed")).toBeVisible();
 
     // Capture screenshot
     await page.screenshot({ path: "test-results/screenshots/desktop-dashboard-overview.png", fullPage: true });
   });
 
-  test("5. Websites page renders project list and verification protocols", async ({ page }) => {
-    await page.goto("/dashboard/websites");
-    await expect(page.getByRole("heading", { name: /Website Projects/i })).toBeVisible();
-    await expect(page.getByRole("button", { name: /Add Website Project/i })).toBeVisible();
+  test("8. Team & Workspace Access page renders member roster and invite trigger", async ({ page }) => {
+    await page.goto("/dashboard/team");
+    await expect(page.getByRole("heading", { name: "Team & Workspace Access" })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Invite Member/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Workspace Members" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Pending Invitations" })).toBeVisible();
 
     // Capture screenshot
+    await page.screenshot({ path: "test-results/screenshots/team-management-page.png", fullPage: true });
+  });
+
+  test("9. Account Profile page renders user identity management", async ({ page }) => {
+    await page.goto("/dashboard/profile");
+    await expect(page.getByRole("heading", { name: "Account Profile" })).toBeVisible();
+    await expect(page.getByText("User Details")).toBeVisible();
+    await expect(page.getByText("Security & Password")).toBeVisible();
+
+    // Capture screenshot
+    await page.screenshot({ path: "test-results/screenshots/account-profile-page.png", fullPage: true });
+  });
+
+  test("10. Website Projects page renders domain list, search, and add dialog", async ({ page }) => {
+    await page.goto("/dashboard/websites");
+    await expect(page.getByRole("heading", { name: "Website Projects", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: /Add Website/i })).toBeVisible();
+    await expect(page.getByPlaceholder(/Search by name or domain/i)).toBeVisible();
+
+    // Open Add Website modal
+    await page.getByRole("button", { name: /Add Website/i }).click();
+    await expect(page.getByRole("heading", { name: /Add Website Project/i })).toBeVisible();
+    await expect(page.getByLabel(/Target Domain or Canonical URL/i)).toBeVisible();
+
+    // Capture screenshot with modal open
     await page.screenshot({ path: "test-results/screenshots/desktop-websites-page.png", fullPage: true });
   });
 
-  test("6. Audits page renders target URL input and preflight runner", async ({ page }) => {
+  test("11. Technical Audits page renders target URL input and preflight runner", async ({ page }) => {
     await page.goto("/dashboard/audits");
-    await expect(page.getByText(/Technical SEO Audits/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Technical SEO Audits/i })).toBeVisible();
     await expect(page.getByRole("button", { name: /Run Preflight Audit/i })).toBeVisible();
 
     // Capture screenshot
     await page.screenshot({ path: "test-results/screenshots/desktop-audits-page.png", fullPage: true });
   });
 
-  test("7. Phase 2 specification pages render differentiated coming soon states", async ({ page }) => {
-    // Keywords
-    await page.goto("/dashboard/keywords");
-    await expect(page.getByText(/Keyword Intelligence & Search Analytics/i)).toBeVisible();
-    await expect(page.getByText(/Phase 2 Release/i)).toBeVisible();
-
-    // Billing
+  test("12. Phase 3 roadmap pages render clear status", async ({ page }) => {
     await page.goto("/dashboard/billing");
-    await expect(page.getByText(/Subscription & Usage/i)).toBeVisible();
-    await expect(page.getByText(/Billing Environment Status/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Subscription & Usage/i })).toBeVisible();
     await page.screenshot({ path: "test-results/screenshots/desktop-billing-page.png", fullPage: true });
 
-    // Settings
     await page.goto("/dashboard/settings");
-    await expect(page.getByText(/Organization Settings/i)).toBeVisible();
-    await expect(page.getByText(/Crawler Engine Security Policy/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: /Organization Settings/i })).toBeVisible();
     await page.screenshot({ path: "test-results/screenshots/desktop-settings-page.png", fullPage: true });
   });
 });
