@@ -45,6 +45,7 @@ class RawAIOptimizationOutput(BaseModel):
     Schema for structured JSON returned by the AI provider.
     Validated independently by the application layer.
     """
+
     suggested_value: str = Field(
         ...,
         description="The proposed SEO improvement, revised title, description, or structured heading recommendations.",

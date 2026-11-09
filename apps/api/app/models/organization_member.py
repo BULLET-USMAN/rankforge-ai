@@ -13,10 +13,9 @@ class OrganizationMember(Base):
     Membership linking a user profile to an organization with an RBAC role
     ('owner', 'admin', 'editor', 'viewer').
     """
+
     __tablename__ = "organization_members"
-    __table_args__ = (
-        UniqueConstraint("organization_id", "user_id", name="uq_org_member"),
-    )
+    __table_args__ = (UniqueConstraint("organization_id", "user_id", name="uq_org_member"),)
 
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
@@ -30,4 +29,6 @@ class OrganizationMember(Base):
     )
 
     organization: Mapped["Organization"] = relationship("Organization", back_populates="members")
-    user: Mapped["Profile"] = relationship("Profile", foreign_keys=[user_id], back_populates="memberships")
+    user: Mapped["Profile"] = relationship(
+        "Profile", foreign_keys=[user_id], back_populates="memberships"
+    )

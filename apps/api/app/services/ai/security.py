@@ -18,7 +18,9 @@ class PromptSecuritySanitizer:
     MAX_USER_GUIDANCE_CHARS = 500
 
     @classmethod
-    def wrap_untrusted_content(cls, raw_text: Optional[str], label: str = "untrusted_page_content") -> str:
+    def wrap_untrusted_content(
+        cls, raw_text: Optional[str], label: str = "untrusted_page_content"
+    ) -> str:
         """
         Wraps untrusted crawled content in explicit XML boundary tags with anti-injection reminders.
         """
@@ -26,7 +28,7 @@ class PromptSecuritySanitizer:
             return f"<{label}>\n[No content provided]\n</{label}>"
 
         # Bounded truncation to prevent token exhaustion attacks
-        truncated = raw_text.strip()[:cls.MAX_PAGE_EXCERPT_CHARS]
+        truncated = raw_text.strip()[: cls.MAX_PAGE_EXCERPT_CHARS]
         # Neutralize XML closing tags that could escape the boundary
         safe_text = truncated.replace(f"</{label}>", f"&lt;/{label}&gt;")
 
@@ -46,7 +48,7 @@ class PromptSecuritySanitizer:
         if not guidance or not guidance.strip():
             return None
 
-        cleaned = guidance.strip()[:cls.MAX_USER_GUIDANCE_CHARS]
+        cleaned = guidance.strip()[: cls.MAX_USER_GUIDANCE_CHARS]
         # Strip potential markdown code block injection
         cleaned = cleaned.replace("```", "'''")
         return cleaned

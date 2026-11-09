@@ -14,13 +14,17 @@ class SEOAuditComparison(Base):
     """
     Historical differential comparison between two completed audit snapshots.
     """
+
     __tablename__ = "seo_audit_comparisons"
 
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
     )
     website_project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
 
     current_audit_id: Mapped[str] = mapped_column(

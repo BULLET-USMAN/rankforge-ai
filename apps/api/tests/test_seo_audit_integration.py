@@ -135,9 +135,22 @@ def test_audit_sync_execution_and_findings(client, db_session):
         h1_count=1,
         headings_json={"h1": {"count": 1, "items": [{"text": "Welcome"}]}},
         images_count=1,
-        images_json=[{"src": "/hero.png", "alt": "Hero visual banner", "has_alt": True, "is_empty_alt": False}],
+        images_json=[
+            {
+                "src": "/hero.png",
+                "alt": "Hero visual banner",
+                "has_alt": True,
+                "is_empty_alt": False,
+            }
+        ],
         structured_data_json=[{"is_valid_json": True, "types": ["Organization"]}],
-        links_json=[{"target_url": "https://auditme.com/broken", "is_internal": True, "anchor_text": "Broken Link"}],
+        links_json=[
+            {
+                "target_url": "https://auditme.com/broken",
+                "is_internal": True,
+                "anchor_text": "Broken Link",
+            }
+        ],
     )
 
     # Page 2: Problematic page (Missing title, missing H1, image missing alt)
@@ -154,7 +167,9 @@ def test_audit_sync_execution_and_findings(client, db_session):
         h1_count=0,  # Missing H1!
         headings_json={"h1": {"count": 0, "items": []}},
         images_count=1,
-        images_json=[{"src": "/team.jpg", "alt": None, "has_alt": False, "is_empty_alt": False}],  # Missing alt!
+        images_json=[
+            {"src": "/team.jpg", "alt": None, "has_alt": False, "is_empty_alt": False}
+        ],  # Missing alt!
         structured_data_json=[],
         links_json=[],
     )
@@ -214,7 +229,7 @@ def test_audit_sync_execution_and_findings(client, db_session):
     assert "META-001" in rule_ids  # Missing title
     assert "HEAD-001" in rule_ids  # Missing H1
     assert "HTTP-001" in rule_ids  # Broken link to 404
-    assert "IMG-001" in rule_ids   # Missing alt
+    assert "IMG-001" in rule_ids  # Missing alt
 
     # Filter findings by category
     meta_findings = client.get(
@@ -274,7 +289,13 @@ def test_audit_comparison_between_runs(client, db_session):
     )
 
     # Crawl 1: Problematic page with missing title
-    crawl1 = CrawlJob(project_id=project.id, organization_id=org_id, status="completed", pages_crawled=1, config_json={})
+    crawl1 = CrawlJob(
+        project_id=project.id,
+        organization_id=org_id,
+        status="completed",
+        pages_crawled=1,
+        config_json={},
+    )
     db_session.add(crawl1)
     db_session.commit()
     db_session.refresh(crawl1)
@@ -301,7 +322,13 @@ def test_audit_comparison_between_runs(client, db_session):
     audit1_id = audit1_resp.json()["id"]
 
     # Crawl 2: Issue fixed (title added), but H1 removed
-    crawl2 = CrawlJob(project_id=project.id, organization_id=org_id, status="completed", pages_crawled=1, config_json={})
+    crawl2 = CrawlJob(
+        project_id=project.id,
+        organization_id=org_id,
+        status="completed",
+        pages_crawled=1,
+        config_json={},
+    )
     db_session.add(crawl2)
     db_session.commit()
     db_session.refresh(crawl2)

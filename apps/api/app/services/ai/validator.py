@@ -44,7 +44,7 @@ class RecommendationValidator:
             output.explanation = "Generated recommendation based on technical SEO audit evidence."
 
         if len(output.explanation) > cls.MAX_EXPLANATION_LENGTH:
-            output.explanation = output.explanation[:cls.MAX_EXPLANATION_LENGTH]
+            output.explanation = output.explanation[: cls.MAX_EXPLANATION_LENGTH]
 
         # Sanitize HTML script tags and inline handlers
         cleaned_suggested = PromptSecuritySanitizer.sanitize_output_value(output.suggested_value)
@@ -61,7 +61,9 @@ class RecommendationValidator:
                     clean_u = u.rstrip(".,;:)")
                     if clean_u not in eligible_urls:
                         # Reject or sanitize hallucinated target URL
-                        cleaned_suggested = cleaned_suggested.replace(clean_u, "[Unverified link target removed]")
+                        cleaned_suggested = cleaned_suggested.replace(
+                            clean_u, "[Unverified link target removed]"
+                        )
 
         # Clean alternative suggestions
         cleaned_alternatives: Optional[List[str]] = None

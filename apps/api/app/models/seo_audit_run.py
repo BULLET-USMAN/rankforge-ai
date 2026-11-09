@@ -15,13 +15,17 @@ class SEOAuditRun(Base):
     """
     Technical SEO audit execution record analyzing a completed crawl snapshot.
     """
+
     __tablename__ = "seo_audit_runs"
 
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
     )
     website_project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
     crawl_job_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("crawl_jobs.id", ondelete="CASCADE"), index=True, nullable=False
@@ -35,7 +39,9 @@ class SEOAuditRun(Base):
     ruleset_version: Mapped[str] = mapped_column(String(50), default="v1.0.0", nullable=False)
     scoring_version: Mapped[str] = mapped_column(String(50), default="v1.0.0", nullable=False)
 
-    score: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)  # 0-100 or None if insufficient coverage
+    score: Mapped[Optional[int]] = mapped_column(
+        Integer, nullable=True
+    )  # 0-100 or None if insufficient coverage
     score_coverage: Mapped[float] = mapped_column(Float, default=1.0, nullable=False)  # 0.0 - 1.0
 
     pages_evaluated: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

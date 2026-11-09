@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from typing import Any, Dict, List, Optional
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -62,7 +63,7 @@ class OptimizationContextBuilder:
             current_title = crawled_page.title or ""
             current_description = crawled_page.meta_description or ""
             headings_json = crawled_page.headings_json or {}
-            
+
             # Extract H1 safely whether headings_json is a list or dict
             h1_val = headings_json.get("h1")
             if isinstance(h1_val, list) and h1_val:
@@ -70,7 +71,7 @@ class OptimizationContextBuilder:
                 h1 = first if isinstance(first, str) else first.get("text", "")
             elif isinstance(h1_val, dict) and h1_val.get("items"):
                 h1 = h1_val["items"][0].get("text", "")
-            
+
             # Synthesize body text from metadata and headings if raw text sample not directly stored
             text_sample = getattr(crawled_page, "page_text_sample", None)
             if text_sample:
@@ -84,7 +85,12 @@ class OptimizationContextBuilder:
                 for lvl in ["h1", "h2", "h3"]:
                     items = headings_json.get(lvl, [])
                     if isinstance(items, list):
-                        parts.extend(f"{lvl.upper()}: {item}" if isinstance(item, str) else f"{lvl.upper()}: {item.get('text', '')}" for item in items[:5])
+                        parts.extend(
+                            f"{lvl.upper()}: {item}"
+                            if isinstance(item, str)
+                            else f"{lvl.upper()}: {item.get('text', '')}"
+                            for item in items[:5]
+                        )
                 raw_body_text = "\n".join(parts) or "No body text extracted."
 
             word_count = len(raw_body_text.split())
@@ -95,7 +101,9 @@ class OptimizationContextBuilder:
                     for img in crawled_page.images_json[:5]
                 ]
                 images_summary = "; ".join(img_samples)
-            internal_links_count = crawled_page.internal_links_count or len(crawled_page.links_json or [])
+            internal_links_count = crawled_page.internal_links_count or len(
+                crawled_page.links_json or []
+            )
 
         # Check for insufficient context
         if not crawled_page and not finding:

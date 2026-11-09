@@ -14,6 +14,7 @@ class SEOAuditCategoryScore(Base):
     """
     Weighted category score breakdown for an audit run.
     """
+
     __tablename__ = "seo_audit_category_scores"
 
     audit_run_id: Mapped[str] = mapped_column(

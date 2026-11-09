@@ -11,10 +11,14 @@ class AuditJob(Base):
     """
     Asynchronous audit task execution tracker.
     """
+
     __tablename__ = "audit_jobs"
 
     project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False

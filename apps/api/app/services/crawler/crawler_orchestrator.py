@@ -59,15 +59,20 @@ class CrawlerOrchestrator:
         # CRITICAL VERIFICATION GATE:
         # Crawls can only run against verified domain projects!
         # =========================================================================
-        verification = self.db.query(WebsiteVerification).filter(
-            WebsiteVerification.project_id == project.id,
-            WebsiteVerification.status == "verified"
-        ).first()
+        verification = (
+            self.db.query(WebsiteVerification)
+            .filter(
+                WebsiteVerification.project_id == project.id,
+                WebsiteVerification.status == "verified",
+            )
+            .first()
+        )
 
         if not verification:
             logger.warning(
                 "Crawl rejected for project %s (domain %s): domain not verified.",
-                project.id, project.domain
+                project.id,
+                project.domain,
             )
             job.status = "failed"
             job.error_message = "Website domain ownership is not verified. Crawls are restricted to verified domains."
@@ -111,7 +116,7 @@ class CrawlerOrchestrator:
             target_domain=project.domain,
             seed_sitemaps=robots_policy.sitemaps,
             job_id=job.id,
-            project_id=project.id
+            project_id=project.id,
         )
 
         # Persist sitemap documents
@@ -130,9 +135,7 @@ class CrawlerOrchestrator:
 
         # 3. Initialize Frontier
         frontier = CrawlFrontier(
-            max_pages=job.max_pages,
-            max_depth=job.max_depth,
-            politeness_delay=delay
+            max_pages=job.max_pages, max_depth=job.max_depth, politeness_delay=delay
         )
 
         # Seed homepage
@@ -203,7 +206,7 @@ class CrawlerOrchestrator:
                     headings_json={},
                     images_json=[],
                     structured_data_json=[],
-                    error_details=fetch_res.error_details or f"HTTP {fetch_res.status_code}"
+                    error_details=fetch_res.error_details or f"HTTP {fetch_res.status_code}",
                 )
                 self.db.add(failed_page)
                 job.pages_failed += 1
@@ -230,7 +233,7 @@ class CrawlerOrchestrator:
                     headings_json={},
                     images_json=[],
                     structured_data_json=[],
-                    error_details=f"Skipped non-HTML content type: {fetch_res.content_type}"
+                    error_details=f"Skipped non-HTML content type: {fetch_res.content_type}",
                 )
                 self.db.add(non_html_page)
                 frontier.mark_completed(item.url)
@@ -239,9 +242,7 @@ class CrawlerOrchestrator:
 
             # Parse HTML and extract SEO metadata
             parsed = PageParser.parse_html(
-                fetch_res.text_content or "",
-                current_url=item.url,
-                target_domain=project.domain
+                fetch_res.text_content or "", current_url=item.url, target_domain=project.domain
             )
 
             crawled_page = CrawledPage(
@@ -280,7 +281,11 @@ class CrawlerOrchestrator:
             # Discover and enqueue internal links
             meta_robots_lower = (parsed.meta_robots or "").lower()
             x_robots_lower = (fetch_res.x_robots_tag or "").lower()
-            if "nofollow" not in meta_robots_lower and "nofollow" not in x_robots_lower and item.depth < job.max_depth:
+            if (
+                "nofollow" not in meta_robots_lower
+                and "nofollow" not in x_robots_lower
+                and item.depth < job.max_depth
+            ):
                 for link in parsed.internal_links:
                     is_crawlable, _ = UrlNormalizer.is_crawlable_resource(link)
                     if is_crawlable:
@@ -305,5 +310,10 @@ class CrawlerOrchestrator:
         self.db.commit()
         logger.info(
             "CrawlJob %s finished with status %s: %s crawled, %s discovered, %s failed, %s blocked.",
-            job.id, job.status, job.pages_crawled, job.pages_discovered, job.pages_failed, job.pages_blocked
+            job.id,
+            job.status,
+            job.pages_crawled,
+            job.pages_discovered,
+            job.pages_failed,
+            job.pages_blocked,
         )

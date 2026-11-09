@@ -10,15 +10,17 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class VerificationInitiateRequest(BaseModel):
     """Request payload to initiate domain verification."""
+
     method: str = Field(
         default="dns_txt",
         pattern=r"^(dns_txt|html_file)$",
-        description="Verification method: 'dns_txt' or 'html_file'"
+        description="Verification method: 'dns_txt' or 'html_file'",
     )
 
 
 class VerificationStatusResponse(BaseModel):
     """Full details of a website's verification challenge."""
+
     project_id: str
     domain: str
     method: str
@@ -38,6 +40,7 @@ class VerificationStatusResponse(BaseModel):
 
 class VerificationCheckResponse(BaseModel):
     """Response returned upon checking verification status."""
+
     is_verified: bool
     status: str
     message: str

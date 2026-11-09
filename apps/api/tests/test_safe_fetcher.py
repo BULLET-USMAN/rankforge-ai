@@ -83,4 +83,7 @@ def test_fetch_sync_handles_ssrf_gracefully():
     # SafeHttpFetcher.fetch_sync returns SafeFetchResult with is_success=False instead of crashing
     result = SafeHttpFetcher.fetch_sync("http://127.0.0.1:8080/admin")
     assert not result.is_success
-    assert "prohibited" in (result.error_details or "").lower() or "loopback" in (result.error_details or "").lower()
+    assert (
+        "prohibited" in (result.error_details or "").lower()
+        or "loopback" in (result.error_details or "").lower()
+    )

@@ -43,9 +43,7 @@ def _get_project_or_404(db: Session, org_id: str, website_id: str) -> WebsitePro
 
 def _get_job_or_404(db: Session, org_id: str, job_id: str) -> CrawlJob:
     job = (
-        db.query(CrawlJob)
-        .filter(CrawlJob.id == job_id, CrawlJob.organization_id == org_id)
-        .first()
+        db.query(CrawlJob).filter(CrawlJob.id == job_id, CrawlJob.organization_id == org_id).first()
     )
     if not job:
         raise HTTPException(
@@ -137,7 +135,8 @@ def create_crawl_job(
         except Exception as exc:
             logger.warning(
                 "Could not dispatch Celery task for crawl %s: %s. Executing inline fallback.",
-                job.id, exc
+                job.id,
+                exc,
             )
             orchestrator = CrawlerOrchestrator(db=db, job_id=job.id)
             orchestrator.run()
@@ -215,7 +214,9 @@ def list_crawled_pages(
     org_id: str,
     job_id: str,
     search: Optional[str] = Query(None, description="Search in URL or title"),
-    status_filter: Optional[str] = Query(None, description="Filter: '200', '4xx', '5xx', 'blocked', 'failed'"),
+    status_filter: Optional[str] = Query(
+        None, description="Filter: '200', '4xx', '5xx', 'blocked', 'failed'"
+    ),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     membership: OrganizationMember = Depends(RequireOrgRole("viewer")),
@@ -243,11 +244,18 @@ def list_crawled_pages(
         elif flt == "blocked":
             query = query.filter(CrawledPage.error_details.ilike("%robots.txt%"))
         elif flt == "failed":
-            query = query.filter((CrawledPage.status_code == 0) | (CrawledPage.error_details.isnot(None)))
+            query = query.filter(
+                (CrawledPage.status_code == 0) | (CrawledPage.error_details.isnot(None))
+            )
 
     total = query.count()
     offset = (page - 1) * page_size
-    items = query.order_by(CrawledPage.depth.asc(), CrawledPage.created_at.asc()).offset(offset).limit(page_size).all()
+    items = (
+        query.order_by(CrawledPage.depth.asc(), CrawledPage.created_at.asc())
+        .offset(offset)
+        .limit(page_size)
+        .all()
+    )
 
     return CrawledPageListResponse(
         items=items,

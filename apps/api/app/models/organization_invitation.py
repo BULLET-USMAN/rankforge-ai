@@ -14,6 +14,7 @@ class OrganizationInvitation(Base):
     Invitation to join an organization with a specific role.
     Stores cryptographically secure SHA-256 token hashes.
     """
+
     __tablename__ = "organization_invitations"
 
     organization_id: Mapped[str] = mapped_column(
@@ -29,5 +30,7 @@ class OrganizationInvitation(Base):
     accepted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     revoked_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
-    organization: Mapped["Organization"] = relationship("Organization", back_populates="invitations")
+    organization: Mapped["Organization"] = relationship(
+        "Organization", back_populates="invitations"
+    )
     inviter: Mapped["Profile"] = relationship("Profile", back_populates="sent_invitations")

@@ -44,7 +44,9 @@ class VerificationService:
             return "file_upload"
         if clean == "dns_txt":
             return "dns_txt"
-        raise ValueError(f"Unsupported verification method '{method}'. Must be 'dns_txt' or 'html_file'.")
+        raise ValueError(
+            f"Unsupported verification method '{method}'. Must be 'dns_txt' or 'html_file'."
+        )
 
     @classmethod
     def get_or_create_challenge(
@@ -66,7 +68,11 @@ class VerificationService:
 
         # If existing record is unexpired and pending/verified, return it
         if verif and verif.status in {"pending", "verified"} and verif.expires_at:
-            exp = verif.expires_at if verif.expires_at.tzinfo else verif.expires_at.replace(tzinfo=timezone.utc)
+            exp = (
+                verif.expires_at
+                if verif.expires_at.tzinfo
+                else verif.expires_at.replace(tzinfo=timezone.utc)
+            )
             if exp > now:
                 return verif
 
@@ -141,10 +147,16 @@ class VerificationService:
 
         # Check expiration
         if verif.expires_at:
-            exp = verif.expires_at if verif.expires_at.tzinfo else verif.expires_at.replace(tzinfo=timezone.utc)
+            exp = (
+                verif.expires_at
+                if verif.expires_at.tzinfo
+                else verif.expires_at.replace(tzinfo=timezone.utc)
+            )
             if exp <= now:
                 verif.status = "expired"
-                verif.failure_reason = "Verification challenge has expired. Please regenerate a new token."
+                verif.failure_reason = (
+                    "Verification challenge has expired. Please regenerate a new token."
+                )
                 db.commit()
                 return False, verif.failure_reason, verif
 
@@ -164,14 +176,18 @@ class VerificationService:
         try:
             answers = resolver.resolve(dns_query_target, "TXT")
             for rdata in answers:
-                txt_string = b"".join(rdata.strings).decode("utf-8", errors="ignore").strip().lower()
+                txt_string = (
+                    b"".join(rdata.strings).decode("utf-8", errors="ignore").strip().lower()
+                )
                 records_found.append(txt_string)
         except dns.resolver.NXDOMAIN:
             # Fallback to root domain if challenge subdomain was not created
             try:
                 root_answers = resolver.resolve(project.domain, "TXT")
                 for rdata in root_answers:
-                    txt_string = b"".join(rdata.strings).decode("utf-8", errors="ignore").strip().lower()
+                    txt_string = (
+                        b"".join(rdata.strings).decode("utf-8", errors="ignore").strip().lower()
+                    )
                     records_found.append(txt_string)
             except Exception:
                 pass
@@ -191,10 +207,7 @@ class VerificationService:
             return False, reason, verif
 
         # Validate against expected challenge
-        is_match = any(
-            any(exp in rec for exp in expected_values)
-            for rec in records_found
-        )
+        is_match = any(any(exp in rec for exp in expected_values) for rec in records_found)
 
         verif.last_checked_at = now
         if is_match:
@@ -207,7 +220,11 @@ class VerificationService:
             return True, "Domain ownership successfully verified via DNS TXT record.", verif
         else:
             verif.status = "failed"
-            found_summary = f"Found {len(records_found)} TXT records." if records_found else "No TXT records found."
+            found_summary = (
+                f"Found {len(records_found)} TXT records."
+                if records_found
+                else "No TXT records found."
+            )
             reason = f"Expected record value containing '{verif.txt_record_value}' at {dns_query_target}. {found_summary} DNS changes may take several minutes to propagate."
             verif.failure_reason = reason
             db.commit()
@@ -224,10 +241,16 @@ class VerificationService:
         now = datetime.now(timezone.utc)
 
         if verif.expires_at:
-            exp = verif.expires_at if verif.expires_at.tzinfo else verif.expires_at.replace(tzinfo=timezone.utc)
+            exp = (
+                verif.expires_at
+                if verif.expires_at.tzinfo
+                else verif.expires_at.replace(tzinfo=timezone.utc)
+            )
             if exp <= now:
                 verif.status = "expired"
-                verif.failure_reason = "Verification challenge has expired. Please regenerate a new token."
+                verif.failure_reason = (
+                    "Verification challenge has expired. Please regenerate a new token."
+                )
                 db.commit()
                 return False, verif.failure_reason, verif
 
@@ -254,7 +277,11 @@ class VerificationService:
                 response = fallback_res
             else:
                 verif.status = "failed"
-                err_msg = response.error_details or fallback_res.error_details or f"HTTP {response.status_code or fallback_res.status_code}"
+                err_msg = (
+                    response.error_details
+                    or fallback_res.error_details
+                    or f"HTTP {response.status_code or fallback_res.status_code}"
+                )
                 reason = f"Could not retrieve verification file from {target_url} or {fallback_url}: {err_msg}"
                 verif.failure_reason = reason
                 db.commit()
@@ -289,9 +316,7 @@ class VerificationService:
         project.verification_status = "revoked"
 
         verifications = (
-            db.query(WebsiteVerification)
-            .filter(WebsiteVerification.project_id == project.id)
-            .all()
+            db.query(WebsiteVerification).filter(WebsiteVerification.project_id == project.id).all()
         )
         for v in verifications:
             v.status = "revoked"

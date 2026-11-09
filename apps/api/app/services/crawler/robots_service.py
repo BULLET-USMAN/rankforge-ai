@@ -196,11 +196,15 @@ class RobotsService:
         result = await fetcher.fetch_async(robots_url, max_size_bytes=512 * 1024)
 
         if not result.is_success and result.status_code not in (404, 410):
-            logger.info("Failed to fetch robots.txt for %s: %s (status %s)", base_url, result.error_details, result.status_code)
+            logger.info(
+                "Failed to fetch robots.txt for %s: %s (status %s)",
+                base_url,
+                result.error_details,
+                result.status_code,
+            )
 
         return RobotsPolicy(
-            raw_content=result.text_content or "",
-            status_code=result.status_code or 404
+            raw_content=result.text_content or "", status_code=result.status_code or 404
         )
 
     @classmethod
@@ -213,6 +217,5 @@ class RobotsService:
         result = fetcher.fetch_sync(robots_url, max_size_bytes=512 * 1024)
 
         return RobotsPolicy(
-            raw_content=result.text_content or "",
-            status_code=result.status_code or 404
+            raw_content=result.text_content or "", status_code=result.status_code or 404
         )

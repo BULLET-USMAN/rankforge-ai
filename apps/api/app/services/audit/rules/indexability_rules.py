@@ -119,7 +119,10 @@ class MetaRobotsNofollowRule(BaseAuditRule):
                         title="Nofollow Directive on Page",
                         description=f"Page at {page.url} specifies 'nofollow', preventing search engines from discovering or passing signals to outlinks.",
                         recommendation="Remove 'nofollow' from page-level directives unless this page explicitly contains untrusted user-submitted links.",
-                        evidence={"meta_robots": page.meta_robots, "x_robots_tag": page.x_robots_tag},
+                        evidence={
+                            "meta_robots": page.meta_robots,
+                            "x_robots_tag": page.x_robots_tag,
+                        },
                         page_url=page.url,
                     )
                 )
@@ -155,7 +158,9 @@ class SitemapUrlNoindexRule(BaseAuditRule):
         for page in sitemap_pages:
             meta_robots = (page.meta_robots or "").lower()
             x_robots = (page.x_robots_tag or "").lower()
-            is_noindex = ("noindex" in meta_robots) or ("noindex" in x_robots) or ("none" in meta_robots)
+            is_noindex = (
+                ("noindex" in meta_robots) or ("noindex" in x_robots) or ("none" in meta_robots)
+            )
 
             if is_noindex:
                 findings.append(
@@ -164,7 +169,11 @@ class SitemapUrlNoindexRule(BaseAuditRule):
                         title="Sitemap URL Has Noindex Directive",
                         description=f"URL {page.url} is listed in an XML sitemap but returns a noindex directive.",
                         recommendation="Either remove the URL from the XML sitemap or remove the noindex directive so search engines receive consistent instructions.",
-                        evidence={"url": page.url, "meta_robots": page.meta_robots, "x_robots_tag": page.x_robots_tag},
+                        evidence={
+                            "url": page.url,
+                            "meta_robots": page.meta_robots,
+                            "x_robots_tag": page.x_robots_tag,
+                        },
                         page_url=page.url,
                     )
                 )

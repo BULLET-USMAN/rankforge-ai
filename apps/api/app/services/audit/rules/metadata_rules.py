@@ -123,7 +123,10 @@ class DuplicateTitleRule(BaseAuditRule):
                         title="Duplicate Page Title",
                         description=f"Page at {url} shares its title '{title_text}' with {len(urls) - 1} other page(s).",
                         recommendation="Craft a distinctive title tag for each page so users and search engines can differentiate pages.",
-                        evidence={"title": title_text, "shared_with": [u for u in urls if u != url]},
+                        evidence={
+                            "title": title_text,
+                            "shared_with": [u for u in urls if u != url],
+                        },
                         page_url=url,
                         fingerprint_key=title_text,
                     )
@@ -285,7 +288,11 @@ class DuplicateMetaDescriptionRule(BaseAuditRule):
         checked = 0
 
         for page in context.pages:
-            if page.status_code != 200 or not page.meta_description or not page.meta_description.strip():
+            if (
+                page.status_code != 200
+                or not page.meta_description
+                or not page.meta_description.strip()
+            ):
                 continue
             checked += 1
             clean_desc = page.meta_description.strip()
@@ -301,7 +308,10 @@ class DuplicateMetaDescriptionRule(BaseAuditRule):
                         title="Duplicate Meta Description",
                         description=f"Page at {url} shares its meta description with {len(urls) - 1} other page(s).",
                         recommendation="Provide distinct meta descriptions for each page reflecting each URL's specific purpose.",
-                        evidence={"description_sample": desc_text[:80] + "...", "shared_with": [u for u in urls if u != url]},
+                        evidence={
+                            "description_sample": desc_text[:80] + "...",
+                            "shared_with": [u for u in urls if u != url],
+                        },
                         page_url=url,
                         fingerprint_key=desc_text[:64],
                     )
@@ -331,7 +341,11 @@ class MetaDescriptionLengthRule(BaseAuditRule):
         passed = 0
 
         for page in context.pages:
-            if page.status_code != 200 or not page.meta_description or not page.meta_description.strip():
+            if (
+                page.status_code != 200
+                or not page.meta_description
+                or not page.meta_description.strip()
+            ):
                 continue
             checked += 1
             length = len(page.meta_description.strip())
@@ -342,7 +356,10 @@ class MetaDescriptionLengthRule(BaseAuditRule):
                         title="Meta Description Too Short",
                         description=f"Meta description is only {length} characters long, missing opportunity for click-driving context.",
                         recommendation="Aim for 120-160 characters with clear benefits and a gentle call to action.",
-                        evidence={"length": length, "meta_description": page.meta_description.strip()},
+                        evidence={
+                            "length": length,
+                            "meta_description": page.meta_description.strip(),
+                        },
                         page_url=page.url,
                     )
                 )
@@ -353,7 +370,10 @@ class MetaDescriptionLengthRule(BaseAuditRule):
                         title="Meta Description May Truncate",
                         description=f"Meta description is {length} characters long and will likely truncate in search snippet displays.",
                         recommendation="Keep core message within 155-160 characters so Google does not cut it off in search results.",
-                        evidence={"length": length, "meta_description": page.meta_description.strip()},
+                        evidence={
+                            "length": length,
+                            "meta_description": page.meta_description.strip(),
+                        },
                         page_url=page.url,
                     )
                 )

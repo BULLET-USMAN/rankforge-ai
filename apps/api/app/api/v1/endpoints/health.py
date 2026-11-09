@@ -13,6 +13,7 @@ from app.schemas.health import DependencyHealth, LivenessResponse, ReadinessResp
 router = APIRouter()
 
 
+@router.get("/health", response_model=LivenessResponse, tags=["Health"])
 @router.get("/health/live", response_model=LivenessResponse, tags=["Health"])
 def health_live():
     """Liveness probe: verifies that the FastAPI application process is up and responding."""

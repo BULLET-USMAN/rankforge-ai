@@ -14,13 +14,17 @@ class AIQuotaReservation(Base):
     """
     Atomic quota reservation for concurrent background AI jobs.
     """
+
     __tablename__ = "ai_quota_reservations"
 
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
     )
     job_id: Mapped[Optional[str]] = mapped_column(
-        String(36), ForeignKey("ai_generation_jobs.id", ondelete="CASCADE"), index=True, nullable=True
+        String(36),
+        ForeignKey("ai_generation_jobs.id", ondelete="CASCADE"),
+        index=True,
+        nullable=True,
     )
 
     tokens_reserved: Mapped[int] = mapped_column(Integer, default=0, nullable=False)

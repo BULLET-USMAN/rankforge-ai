@@ -10,7 +10,17 @@ from app.services.audit.types import (
     RuleEvaluationResult,
 )
 
-GENERIC_ALT_WORDS = {"image", "photo", "picture", "pic", "logo", "icon", "placeholder", "graphic", "banner"}
+GENERIC_ALT_WORDS = {
+    "image",
+    "photo",
+    "picture",
+    "pic",
+    "logo",
+    "icon",
+    "placeholder",
+    "graphic",
+    "banner",
+}
 
 
 class MissingImageAltRule(BaseAuditRule):
@@ -18,7 +28,9 @@ class MissingImageAltRule(BaseAuditRule):
     category = AuditCategory.IMAGES
     default_severity = FindingSeverity.MEDIUM
     title = "Images Missing Alt Attribute"
-    description = "Images on the page do not include an alt attribute for accessibility and search indexing."
+    description = (
+        "Images on the page do not include an alt attribute for accessibility and search indexing."
+    )
 
     def evaluate(self, context: AuditEvaluationContext) -> RuleEvaluationResult:
         findings = []
@@ -26,7 +38,9 @@ class MissingImageAltRule(BaseAuditRule):
         passed = 0
 
         # Check if the snapshot has image data available
-        has_any_image_field = any(hasattr(p, "images_json") and p.images_json is not None for p in context.pages)
+        has_any_image_field = any(
+            hasattr(p, "images_json") and p.images_json is not None for p in context.pages
+        )
         if not has_any_image_field or len(context.pages) == 0:
             return RuleEvaluationResult(
                 rule_id=self.rule_id,
@@ -92,7 +106,9 @@ class GenericImageAltRule(BaseAuditRule):
         checked = 0
         passed = 0
 
-        has_any_image_field = any(hasattr(p, "images_json") and p.images_json is not None for p in context.pages)
+        has_any_image_field = any(
+            hasattr(p, "images_json") and p.images_json is not None for p in context.pages
+        )
         if not has_any_image_field or len(context.pages) == 0:
             return RuleEvaluationResult(
                 rule_id=self.rule_id,

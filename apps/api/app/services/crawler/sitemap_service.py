@@ -49,10 +49,7 @@ class SitemapService:
 
     @classmethod
     def parse_sitemap_xml(
-        cls,
-        xml_content: str,
-        target_domain: str,
-        sitemap_url: str
+        cls, xml_content: str, target_domain: str, sitemap_url: str
     ) -> tuple[List[str], List[str], Optional[str]]:
         """Parses sitemap XML content safely.
 
@@ -106,7 +103,7 @@ class SitemapService:
         target_domain: str,
         seed_sitemaps: Optional[List[str]] = None,
         job_id: Optional[str] = None,
-        project_id: Optional[str] = None
+        project_id: Optional[str] = None,
     ) -> SitemapParseResult:
         """Discovers, fetches, and parses sitemaps synchronously."""
         result = SitemapParseResult()
@@ -136,7 +133,11 @@ class SitemapService:
         queue: List[str] = list(candidates)
         all_discovered_urls: Set[str] = set()
 
-        while queue and len(visited_sitemaps) < MAX_SITEMAP_DOCS and len(all_discovered_urls) < MAX_SITEMAP_URLS:
+        while (
+            queue
+            and len(visited_sitemaps) < MAX_SITEMAP_DOCS
+            and len(all_discovered_urls) < MAX_SITEMAP_URLS
+        ):
             sitemap_url = queue.pop(0)
             if sitemap_url in visited_sitemaps:
                 continue
@@ -157,14 +158,14 @@ class SitemapService:
             }
 
             if not fetch_res.is_success or not fetch_res.text_content:
-                doc_record["error_details"] = fetch_res.error_details or f"HTTP {fetch_res.status_code}"
+                doc_record["error_details"] = (
+                    fetch_res.error_details or f"HTTP {fetch_res.status_code}"
+                )
                 result.sitemap_documents.append(doc_record)
                 continue
 
             page_urls, nested, parse_err = cls.parse_sitemap_xml(
-                fetch_res.text_content,
-                target_domain,
-                sitemap_url=sitemap_url
+                fetch_res.text_content, target_domain, sitemap_url=sitemap_url
             )
 
             if parse_err:

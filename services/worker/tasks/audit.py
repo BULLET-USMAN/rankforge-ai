@@ -19,7 +19,11 @@ logger = logging.getLogger("rankforge.worker.audit")
 )
 def execute_audit(self, audit_run_id: str):
     """Executes a technical SEO audit run asynchronously."""
-    logger.info("Starting background SEO audit execution: audit_run_id=%s, task_id=%s", audit_run_id, self.request.id)
+    logger.info(
+        "Starting background SEO audit execution: audit_run_id=%s, task_id=%s",
+        audit_run_id,
+        self.request.id,
+    )
     db = SessionLocal()
     try:
         orchestrator = SEOAuditOrchestrator(db=db, audit_run_id=audit_run_id)

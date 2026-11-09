@@ -188,7 +188,9 @@ def test_indexability_rules():
         make_page("https://example.com/meta-noindex", meta_robots="noindex, follow"),
         make_page("https://example.com/header-noindex", x_robots_tag="noindex"),
         make_page("https://example.com/nofollow", meta_robots="nofollow"),
-        make_page("https://example.com/sitemap-noindex", meta_robots="noindex", discovery_method="sitemap"),
+        make_page(
+            "https://example.com/sitemap-noindex", meta_robots="noindex", discovery_method="sitemap"
+        ),
     ]
     ctx = AuditEvaluationContext.from_crawl_data("p1", "example.com", pages, [])
     assert not MetaRobotsNoindexRule().evaluate(ctx).passed
@@ -205,8 +207,12 @@ def test_canonical_rules():
     p2 = make_page("https://example.com/b", canonical_url="https://example.com/a")
     p_frag = make_page("https://example.com/frag", canonical_url="https://example.com/home#section")
     p_ext = make_page("https://example.com/external", canonical_url="https://external.org/page")
-    p_canon_broken = make_page("https://example.com/has-broken-canon", canonical_url="https://example.com/404")
-    p_canon_redir = make_page("https://example.com/has-redir-canon", canonical_url="https://example.com/301")
+    p_canon_broken = make_page(
+        "https://example.com/has-broken-canon", canonical_url="https://example.com/404"
+    )
+    p_canon_redir = make_page(
+        "https://example.com/has-redir-canon", canonical_url="https://example.com/301"
+    )
 
     pages = [p_broken, p_redirect, p1, p2, p_frag, p_ext, p_canon_broken, p_canon_redir]
     ctx = AuditEvaluationContext.from_crawl_data("p1", "example.com", pages, [])
@@ -227,14 +233,24 @@ def test_http_link_rules():
         "https://example.com/source",
         links_json=[
             {"target_url": "https://example.com/dead", "is_internal": True, "anchor_text": "Dead"},
-            {"target_url": "https://example.com/crashed", "is_internal": True, "anchor_text": "Error"},
+            {
+                "target_url": "https://example.com/crashed",
+                "is_internal": True,
+                "anchor_text": "Error",
+            },
             {"target_url": "https://example.com/old", "is_internal": True, "anchor_text": "Old"},
         ],
     )
     slow = make_page("https://example.com/slow", response_time_ms=3200.0)
     chained = make_page(
         "https://example.com/chained",
-        redirect_chain_json=[{"from_url": "https://example.com/1", "to_url": "https://example.com/2", "status_code": 301}],
+        redirect_chain_json=[
+            {
+                "from_url": "https://example.com/1",
+                "to_url": "https://example.com/2",
+                "status_code": 301,
+            }
+        ],
     )
 
     pages = [dead, crashed, redir, source, slow, chained]
@@ -252,7 +268,9 @@ def test_site_structure_rules():
     orphan = make_page("https://example.com/orphan", depth=1, discovery_method="sitemap")
     empty_anchor = make_page(
         "https://example.com/page",
-        links_json=[{"target_url": "https://example.com/other", "is_internal": True, "anchor_text": "   "}],
+        links_json=[
+            {"target_url": "https://example.com/other", "is_internal": True, "anchor_text": "   "}
+        ],
     )
     pages = [deep, orphan, empty_anchor]
     ctx = AuditEvaluationContext.from_crawl_data("p1", "example.com", pages, [])
@@ -309,7 +327,12 @@ def test_structured_data_and_sitemap_rules():
     )
     pages = [p_sd_err, p_sd_notype]
     sitemaps = [
-        SimpleNamespace(url="https://example.com/sitemap.xml", status="failed", status_code=500, error_details="500 Server Error"),
+        SimpleNamespace(
+            url="https://example.com/sitemap.xml",
+            status="failed",
+            status_code=500,
+            error_details="500 Server Error",
+        ),
     ]
     ctx = AuditEvaluationContext.from_crawl_data("p1", "example.com", pages, sitemaps)
 

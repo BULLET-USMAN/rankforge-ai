@@ -16,10 +16,14 @@ class CrawlJob(Base):
     Asynchronous website crawler execution record.
     Manages crawl progress, lifecycle states, and metrics.
     """
+
     __tablename__ = "crawl_jobs"
 
     project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False

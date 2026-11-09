@@ -130,3 +130,39 @@ class RequireOrgRole:
             )
 
         return member
+
+
+def require_role(
+    db: Session,
+    organization_id: str,
+    user_id: str,
+    minimum_role: str = "viewer",
+) -> OrganizationMember:
+    """Verifies that user belongs to organization and possesses at least minimum_role."""
+    if minimum_role not in ROLE_HIERARCHY:
+        raise ValueError(f"Unknown role '{minimum_role}'")
+
+    member = (
+        db.query(OrganizationMember)
+        .filter(
+            OrganizationMember.organization_id == organization_id,
+            OrganizationMember.user_id == user_id,
+        )
+        .first()
+    )
+    if not member:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied. You are not a member of this workspace.",
+        )
+
+    user_level = ROLE_HIERARCHY.get(member.role, 0)
+    required_level = ROLE_HIERARCHY[minimum_role]
+
+    if user_level < required_level:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Insufficient permissions. Minimum role required: '{minimum_role}'. Your role: '{member.role}'.",
+        )
+
+    return member

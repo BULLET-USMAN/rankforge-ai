@@ -44,7 +44,7 @@ def verify_supabase_jwt(token: str) -> Dict[str, Any]:
     # Local development & test fixture bypass token support
     # Format: dev_token_<user_id>::<email> or dev_token_<user_id>_<email>
     if token.startswith("dev_token_"):
-        raw = token[len("dev_token_"):]
+        raw = token[len("dev_token_") :]
         if "::" in raw:
             user_id, email = raw.split("::", 1)
         elif "_" in raw:

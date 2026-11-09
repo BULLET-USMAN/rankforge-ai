@@ -110,7 +110,9 @@ class BrokenCanonicalRule(BaseAuditRule):
             if page.status_code != 200 or not page.canonical_url:
                 continue
             checked += 1
-            target = context.url_to_page.get(page.canonical_url) or context.normalized_url_to_page.get(page.canonical_url)
+            target = context.url_to_page.get(
+                page.canonical_url
+            ) or context.normalized_url_to_page.get(page.canonical_url)
             if target and target.status_code >= 400:
                 findings.append(
                     self.create_finding(
@@ -118,7 +120,10 @@ class BrokenCanonicalRule(BaseAuditRule):
                         title=f"Canonical Points to HTTP {target.status_code} Error",
                         description=f"Page at {page.url} sets canonical target to {page.canonical_url}, which returns status {target.status_code}.",
                         recommendation="Update the canonical URL to point to a valid, live 200 OK document.",
-                        evidence={"canonical_url": page.canonical_url, "target_status": target.status_code},
+                        evidence={
+                            "canonical_url": page.canonical_url,
+                            "target_status": target.status_code,
+                        },
                         page_url=page.url,
                     )
                 )
@@ -151,7 +156,9 @@ class RedirectCanonicalRule(BaseAuditRule):
             if page.status_code != 200 or not page.canonical_url:
                 continue
             checked += 1
-            target = context.url_to_page.get(page.canonical_url) or context.normalized_url_to_page.get(page.canonical_url)
+            target = context.url_to_page.get(
+                page.canonical_url
+            ) or context.normalized_url_to_page.get(page.canonical_url)
             if target and 300 <= target.status_code < 400:
                 findings.append(
                     self.create_finding(
@@ -159,7 +166,10 @@ class RedirectCanonicalRule(BaseAuditRule):
                         title="Canonical Points to Redirecting URL",
                         description=f"Page at {page.url} sets canonical target to {page.canonical_url}, which redirects with HTTP {target.status_code}.",
                         recommendation="Point the canonical URL directly to the final 200 OK destination rather than intermediate redirect hops.",
-                        evidence={"canonical_url": page.canonical_url, "target_status": target.status_code},
+                        evidence={
+                            "canonical_url": page.canonical_url,
+                            "target_status": target.status_code,
+                        },
                         page_url=page.url,
                     )
                 )
@@ -194,9 +204,14 @@ class CanonicalLoopRule(BaseAuditRule):
             checked += 1
 
             # Check if canonical target points back to this page
-            target = context.url_to_page.get(page.canonical_url) or context.normalized_url_to_page.get(page.canonical_url)
+            target = context.url_to_page.get(
+                page.canonical_url
+            ) or context.normalized_url_to_page.get(page.canonical_url)
             if target and target.canonical_url:
-                if target.canonical_url in (page.url, page.normalized_url) and page.url != target.url:
+                if (
+                    target.canonical_url in (page.url, page.normalized_url)
+                    and page.url != target.url
+                ):
                     findings.append(
                         self.create_finding(
                             severity=FindingSeverity.CRITICAL,
@@ -246,7 +261,10 @@ class ExternalCanonicalRule(BaseAuditRule):
                         title="Cross-Domain Canonical URL",
                         description=f"Page at {page.url} sets canonical target to external domain '{parsed.netloc}'.",
                         recommendation="Confirm that this cross-domain canonicalization is intentional (e.g. syndicated content) and not a configuration mistake.",
-                        evidence={"canonical_url": page.canonical_url, "target_domain": parsed.netloc},
+                        evidence={
+                            "canonical_url": page.canonical_url,
+                            "target_domain": parsed.netloc,
+                        },
                         page_url=page.url,
                     )
                 )

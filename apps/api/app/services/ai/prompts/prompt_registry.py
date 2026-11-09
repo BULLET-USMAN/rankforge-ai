@@ -159,7 +159,7 @@ class PromptRegistry:
                 "TASK SPECIFICS FOR IMAGE ALT TEXT GUIDANCE:\n"
                 "- Provide accessibility guidance for images detected on the page.\n"
                 "- IMPORTANT CONSTRAINT: We do NOT have raw image pixels. Do NOT invent what the image depicts solely from a cryptic filename.\n"
-                "- Acknowledge that purely decorative images should legitimately have empty alt attributes (alt=\"\").\n"
+                '- Acknowledge that purely decorative images should legitimately have empty alt attributes (alt="").\n'
                 "- Explain how the website editor should formulate descriptive alt text based on the visual subject matter."
             ),
             "user_template": (

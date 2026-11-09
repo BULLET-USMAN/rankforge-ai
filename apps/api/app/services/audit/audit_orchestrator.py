@@ -53,9 +53,7 @@ class SEOAuditOrchestrator:
                 .first()
             )
             crawl_job = (
-                self.db.query(CrawlJob)
-                .filter(CrawlJob.id == audit_run.crawl_job_id)
-                .first()
+                self.db.query(CrawlJob).filter(CrawlJob.id == audit_run.crawl_job_id).first()
             )
 
             if not project or not crawl_job:
@@ -63,14 +61,10 @@ class SEOAuditOrchestrator:
 
             # 2. Fetch crawled pages and sitemaps
             crawled_pages = (
-                self.db.query(CrawledPage)
-                .filter(CrawledPage.job_id == crawl_job.id)
-                .all()
+                self.db.query(CrawledPage).filter(CrawledPage.job_id == crawl_job.id).all()
             )
             sitemaps = (
-                self.db.query(SitemapDocument)
-                .filter(SitemapDocument.job_id == crawl_job.id)
-                .all()
+                self.db.query(SitemapDocument).filter(SitemapDocument.job_id == crawl_job.id).all()
             )
 
             # 3. Construct evaluation context
@@ -160,7 +154,9 @@ class SEOAuditOrchestrator:
 
             # Summary JSON
             audit_run.summary_json = {
-                "categories": {cat.value: sc.to_dict() for cat, sc in score_result.category_scores.items()},
+                "categories": {
+                    cat.value: sc.to_dict() for cat, sc in score_result.category_scores.items()
+                },
                 "severity_counts": score_result.severity_counts,
                 "pages_evaluated": context.pages_evaluated,
                 "pages_not_evaluated": context.pages_not_evaluated,
@@ -196,10 +192,17 @@ class SEOAuditOrchestrator:
                         organization_id=audit_run.organization_id,
                     )
                 except Exception as comp_err:
-                    logger.warning("Audit comparison failed for %s vs %s: %s", audit_run.id, prev_audit.id, comp_err)
+                    logger.warning(
+                        "Audit comparison failed for %s vs %s: %s",
+                        audit_run.id,
+                        prev_audit.id,
+                        comp_err,
+                    )
 
         except Exception as exc:
-            logger.exception("Audit execution failed for audit_run_id=%s: %s", self.audit_run_id, exc)
+            logger.exception(
+                "Audit execution failed for audit_run_id=%s: %s", self.audit_run_id, exc
+            )
             audit_run.status = "failed"
             audit_run.error_message = str(exc)[:1000]
             self.db.commit()

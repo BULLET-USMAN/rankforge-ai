@@ -10,13 +10,17 @@ class AuditResult(Base):
     """
     Detailed technical audit findings for a target URL.
     """
+
     __tablename__ = "audit_results"
 
     job_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("audit_jobs.id", ondelete="CASCADE"), index=True, nullable=False
     )
     project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
     url: Mapped[str] = mapped_column(String(1024), nullable=False)
     status_code: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -29,7 +33,9 @@ class AuditResult(Base):
     score: Mapped[int] = mapped_column(Integer, default=100, nullable=False)
 
     job: Mapped["AuditJob"] = relationship("AuditJob", back_populates="results")
-    project: Mapped["WebsiteProject"] = relationship("WebsiteProject", back_populates="audit_results")
+    project: Mapped["WebsiteProject"] = relationship(
+        "WebsiteProject", back_populates="audit_results"
+    )
     recommendations: Mapped[List["SEORecommendation"]] = relationship(
         "SEORecommendation", back_populates="audit_result", cascade="all, delete-orphan"
     )

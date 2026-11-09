@@ -14,6 +14,7 @@ class SEOAuditFinding(Base):
     """
     Individual technical SEO finding detected during an audit run.
     """
+
     __tablename__ = "seo_audit_findings"
 
     audit_run_id: Mapped[str] = mapped_column(
@@ -23,13 +24,18 @@ class SEOAuditFinding(Base):
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
     )
     website_project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
 
     rule_id: Mapped[str] = mapped_column(String(100), index=True, nullable=False)
     rule_version: Mapped[str] = mapped_column(String(50), default="v1.0.0", nullable=False)
 
-    page_url: Mapped[Optional[str]] = mapped_column(String(1024), index=True, nullable=True)  # None for site-wide
+    page_url: Mapped[Optional[str]] = mapped_column(
+        String(1024), index=True, nullable=True
+    )  # None for site-wide
     severity: Mapped[str] = mapped_column(
         String(50), index=True, nullable=False
     )  # critical, high, medium, low, informational

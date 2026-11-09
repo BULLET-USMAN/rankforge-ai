@@ -17,7 +17,9 @@ def test_url_normalizer():
     assert norm == "https://example.com/about"
 
     # Tracking query parameters removal & parameter sorting
-    norm2 = UrlNormalizer.normalize_url("https://example.com/page?utm_source=google&b=2&a=1&fbclid=xyz")
+    norm2 = UrlNormalizer.normalize_url(
+        "https://example.com/page?utm_source=google&b=2&a=1&fbclid=xyz"
+    )
     assert norm2 == "https://example.com/page?a=1&b=2"
 
     # Default port normalization
@@ -28,7 +30,12 @@ def test_url_normalizer():
     assert UrlNormalizer.is_in_scope("https://example.com/features", "example.com") is True
     assert UrlNormalizer.is_in_scope("https://www.example.com/features", "example.com") is True
     assert UrlNormalizer.is_in_scope("https://sub.example.com/features", "example.com") is False
-    assert UrlNormalizer.is_in_scope("https://sub.example.com/features", "example.com", allow_subdomains=True) is True
+    assert (
+        UrlNormalizer.is_in_scope(
+            "https://sub.example.com/features", "example.com", allow_subdomains=True
+        )
+        is True
+    )
     assert UrlNormalizer.is_in_scope("https://evil.com/page", "example.com") is False
 
     # Trap / sensitive resource detection
@@ -36,7 +43,9 @@ def test_url_normalizer():
     assert not is_crawlable
     assert "sensitive_path" in reason
 
-    is_crawlable, reason = UrlNormalizer.is_crawlable_resource("https://example.com/assets/logo.png")
+    is_crawlable, reason = UrlNormalizer.is_crawlable_resource(
+        "https://example.com/assets/logo.png"
+    )
     assert not is_crawlable
     assert "excluded_extension" in reason
 
@@ -203,15 +212,29 @@ def test_crawler_full_execution_sync(client, db_session):
 
     def fake_fetch_sync(url, **kwargs):
         if "robots.txt" in url:
-            return SafeFetchResult(is_success=True, status_code=200, text_content="User-agent: *\nAllow: /\n")
+            return SafeFetchResult(
+                is_success=True, status_code=200, text_content="User-agent: *\nAllow: /\n"
+            )
         elif "sitemap" in url:
             return SafeFetchResult(is_success=False, status_code=404, error_details="Not found")
         elif "/about" in url:
-            return SafeFetchResult(is_success=True, status_code=200, text_content=mock_about_html, content_type="text/html")
+            return SafeFetchResult(
+                is_success=True,
+                status_code=200,
+                text_content=mock_about_html,
+                content_type="text/html",
+            )
         else:
-            return SafeFetchResult(is_success=True, status_code=200, text_content=mock_homepage_html, content_type="text/html")
+            return SafeFetchResult(
+                is_success=True,
+                status_code=200,
+                text_content=mock_homepage_html,
+                content_type="text/html",
+            )
 
-    with patch("app.services.crawler.safe_fetcher.SafeHttpFetcher.fetch_sync", side_effect=fake_fetch_sync):
+    with patch(
+        "app.services.crawler.safe_fetcher.SafeHttpFetcher.fetch_sync", side_effect=fake_fetch_sync
+    ):
         # Create crawl job with execute_sync=True
         resp = client.post(
             f"/api/v1/organizations/{org_id}/websites/{site_id}/crawls?execute_sync=true",

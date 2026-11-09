@@ -143,7 +143,9 @@ class HeadingHierarchySkipRule(BaseAuditRule):
     category = AuditCategory.HEADINGS
     default_severity = FindingSeverity.LOW
     title = "Heading Level Skipped"
-    description = "Page jumps heading levels (e.g., from H1 directly to H3 without an intermediate H2)."
+    description = (
+        "Page jumps heading levels (e.g., from H1 directly to H3 without an intermediate H2)."
+    )
 
     def evaluate(self, context: AuditEvaluationContext) -> RuleEvaluationResult:
         findings = []

@@ -80,7 +80,9 @@ class AIOptimizationOrchestrator:
         )
 
         # 2. Check quota
-        AIUsageMeter.check_quotas(db, organization_id=website.organization_id, estimated_tokens=1500)
+        AIUsageMeter.check_quotas(
+            db, organization_id=website.organization_id, estimated_tokens=1500
+        )
 
         # 3. Provider execution
         provider = get_ai_provider()
@@ -97,7 +99,11 @@ class AIOptimizationOrchestrator:
         )
 
         # 5. Prioritization
-        current_val = evidence_meta.get("current_title" if rec_type == RecommendationType.TITLE_OPTIMIZATION else "current_description")
+        current_val = evidence_meta.get(
+            "current_title"
+            if rec_type == RecommendationType.TITLE_OPTIMIZATION
+            else "current_description"
+        )
         priority = RecommendationPrioritizer.calculate_priority(
             rec_type=rec_type,
             finding=finding,
@@ -180,8 +186,16 @@ class AIOptimizationOrchestrator:
             raise AIEngineException("Associated website project not found.")
 
         rec_type = RecommendationType(recommendation.recommendation_type)
-        audit_run = db.get(SEOAuditRun, recommendation.audit_run_id) if recommendation.audit_run_id else None
-        finding = db.get(SEOAuditFinding, recommendation.source_finding_id) if recommendation.source_finding_id else None
+        audit_run = (
+            db.get(SEOAuditRun, recommendation.audit_run_id)
+            if recommendation.audit_run_id
+            else None
+        )
+        finding = (
+            db.get(SEOAuditFinding, recommendation.source_finding_id)
+            if recommendation.source_finding_id
+            else None
+        )
 
         # Build context with guidance
         request, evidence_meta = OptimizationContextBuilder.build_request(
@@ -195,7 +209,9 @@ class AIOptimizationOrchestrator:
         )
 
         # Check quota
-        AIUsageMeter.check_quotas(db, organization_id=website.organization_id, estimated_tokens=1500)
+        AIUsageMeter.check_quotas(
+            db, organization_id=website.organization_id, estimated_tokens=1500
+        )
 
         provider = get_ai_provider()
         response: AIProviderResponse = await provider.generate(request)
@@ -278,7 +294,11 @@ class AIOptimizationOrchestrator:
         db.commit()
 
         # Gather target pages
-        rec_types = [RecommendationType(t) for t in job.recommendation_types if t in RecommendationType._value2member_map_]
+        rec_types = [
+            RecommendationType(t)
+            for t in job.recommendation_types
+            if t in RecommendationType._value2member_map_
+        ]
         if not rec_types:
             rec_types = [RecommendationType.TITLE_OPTIMIZATION, RecommendationType.META_DESCRIPTION]
 
@@ -321,7 +341,9 @@ class AIOptimizationOrchestrator:
                     )
                     job.completed_items += 1
                 except Exception as e:
-                    logger.warning(f"Failed item in AI job {job_id} ({rec_type.value} for {page_url}): {e}")
+                    logger.warning(
+                        f"Failed item in AI job {job_id} ({rec_type.value} for {page_url}): {e}"
+                    )
                     job.failed_items += 1
                     # Record failed usage attempt if not already recorded
                 db.commit()

@@ -37,9 +37,7 @@ def test_validator_filters_unauthorized_internal_link_targets():
         ),
         explanation="Internal linking proposal",
     )
-    evidence_meta = {
-        "eligible_target_urls": ["https://example.com/authorized-page"]
-    }
+    evidence_meta = {"eligible_target_urls": ["https://example.com/authorized-page"]}
     validated = RecommendationValidator.validate_and_clean(
         output=output,
         rec_type=RecommendationType.INTERNAL_LINKING,

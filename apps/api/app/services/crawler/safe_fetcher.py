@@ -59,16 +59,19 @@ BLOCKED_TLDS = {
 
 class SafeFetchError(Exception):
     """Raised when an external HTTP fetch fails security, timeout, or size constraints."""
+
     pass
 
 
 class SSRFValidationError(SafeFetchError):
     """Raised when target destination violates SSRF or network boundaries."""
+
     pass
 
 
 class ResponseSizeExceededError(SafeFetchError):
     """Raised when response body exceeds allocated byte budget."""
+
     pass
 
 
@@ -117,11 +120,15 @@ class SafeHttpFetcher:
 
         ip_str = str(ip)
         if ip_str == "169.254.169.254":
-            raise SSRFValidationError("Targeting cloud metadata IP (169.254.169.254) is prohibited.")
+            raise SSRFValidationError(
+                "Targeting cloud metadata IP (169.254.169.254) is prohibited."
+            )
         if ip.is_loopback:
             raise SSRFValidationError(f"Target IP {ip_str} is a loopback address.")
         if ip.is_private:
-            raise SSRFValidationError(f"Target IP {ip_str} is in an RFC 1918 private network range.")
+            raise SSRFValidationError(
+                f"Target IP {ip_str} is in an RFC 1918 private network range."
+            )
         if ip.is_link_local:
             raise SSRFValidationError(f"Target IP {ip_str} is a link-local address.")
         if ip.is_multicast:
@@ -185,7 +192,9 @@ class SafeHttpFetcher:
 
         scheme = parsed.scheme.lower()
         if scheme not in ALLOWED_SCHEMES:
-            raise SSRFValidationError(f"Scheme '{scheme}' is prohibited. Only HTTP and HTTPS are permitted.")
+            raise SSRFValidationError(
+                f"Scheme '{scheme}' is prohibited. Only HTTP and HTTPS are permitted."
+            )
 
         if parsed.username or parsed.password:
             raise SSRFValidationError("Embedded userinfo (user:pass@) is prohibited.")
@@ -212,7 +221,11 @@ class SafeHttpFetcher:
         max_redirects: int = MAX_REDIRECTS,
     ) -> SafeFetchResult:
         """Synchronously fetches a resource with SSRF defense and returns SafeFetchResult."""
-        budget = max_size_bytes if max_size_bytes is not None else (max_bytes if max_bytes is not None else MAX_HTML_BYTES)
+        budget = (
+            max_size_bytes
+            if max_size_bytes is not None
+            else (max_bytes if max_bytes is not None else MAX_HTML_BYTES)
+        )
         current_url = url
         redirects_followed = 0
         redirect_chain: List[Dict[str, Any]] = []
@@ -222,7 +235,10 @@ class SafeHttpFetcher:
             with httpx.Client(
                 verify=True,
                 timeout=httpx.Timeout(timeout_seconds, connect=5.0, read=timeout_seconds),
-                headers={"User-Agent": user_agent, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
+                headers={
+                    "User-Agent": user_agent,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                },
                 follow_redirects=False,
             ) as client:
                 while True:
@@ -240,7 +256,9 @@ class SafeHttpFetcher:
                     except httpx.TimeoutException:
                         raise SafeFetchError(f"Connection timed out while fetching {current_url}.")
                     except httpx.ConnectError as e:
-                        raise SafeFetchError(f"Failed to establish connection to {current_url}: {e}")
+                        raise SafeFetchError(
+                            f"Failed to establish connection to {current_url}: {e}"
+                        )
                     except Exception as e:
                         raise SafeFetchError(f"HTTP request error: {e}")
 
@@ -252,18 +270,24 @@ class SafeHttpFetcher:
 
                     if response.is_redirect:
                         if redirects_followed >= max_redirects:
-                            raise SafeFetchError(f"Exceeded maximum redirect limit of {max_redirects}.")
+                            raise SafeFetchError(
+                                f"Exceeded maximum redirect limit of {max_redirects}."
+                            )
 
                         location = response.headers.get("location")
                         if not location:
-                            raise SafeFetchError("Received redirect status code without Location header.")
+                            raise SafeFetchError(
+                                "Received redirect status code without Location header."
+                            )
 
                         next_url = urljoin(current_url, location)
-                        redirect_chain.append({
-                            "from_url": current_url,
-                            "to_url": next_url,
-                            "status_code": response.status_code,
-                        })
+                        redirect_chain.append(
+                            {
+                                "from_url": current_url,
+                                "to_url": next_url,
+                                "status_code": response.status_code,
+                            }
+                        )
                         current_url = next_url
                         redirects_followed += 1
                         continue
@@ -311,7 +335,11 @@ class SafeHttpFetcher:
         max_redirects: int = MAX_REDIRECTS,
     ) -> SafeFetchResult:
         """Asynchronously fetches a resource with SSRF defense and returns SafeFetchResult."""
-        budget = max_size_bytes if max_size_bytes is not None else (max_bytes if max_bytes is not None else MAX_HTML_BYTES)
+        budget = (
+            max_size_bytes
+            if max_size_bytes is not None
+            else (max_bytes if max_bytes is not None else MAX_HTML_BYTES)
+        )
         current_url = url
         redirects_followed = 0
         redirect_chain: List[Dict[str, Any]] = []
@@ -321,7 +349,10 @@ class SafeHttpFetcher:
             async with httpx.AsyncClient(
                 verify=True,
                 timeout=httpx.Timeout(timeout_seconds, connect=5.0, read=timeout_seconds),
-                headers={"User-Agent": user_agent, "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"},
+                headers={
+                    "User-Agent": user_agent,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                },
                 follow_redirects=False,
             ) as client:
                 while True:
@@ -339,7 +370,9 @@ class SafeHttpFetcher:
                     except httpx.TimeoutException:
                         raise SafeFetchError(f"Connection timed out while fetching {current_url}.")
                     except httpx.ConnectError as e:
-                        raise SafeFetchError(f"Failed to establish connection to {current_url}: {e}")
+                        raise SafeFetchError(
+                            f"Failed to establish connection to {current_url}: {e}"
+                        )
                     except Exception as e:
                         raise SafeFetchError(f"HTTP request error: {e}")
 
@@ -351,18 +384,24 @@ class SafeHttpFetcher:
 
                     if response.is_redirect:
                         if redirects_followed >= max_redirects:
-                            raise SafeFetchError(f"Exceeded maximum redirect limit of {max_redirects}.")
+                            raise SafeFetchError(
+                                f"Exceeded maximum redirect limit of {max_redirects}."
+                            )
 
                         location = response.headers.get("location")
                         if not location:
-                            raise SafeFetchError("Received redirect status code without Location header.")
+                            raise SafeFetchError(
+                                "Received redirect status code without Location header."
+                            )
 
                         next_url = urljoin(current_url, location)
-                        redirect_chain.append({
-                            "from_url": current_url,
-                            "to_url": next_url,
-                            "status_code": response.status_code,
-                        })
+                        redirect_chain.append(
+                            {
+                                "from_url": current_url,
+                                "to_url": next_url,
+                                "status_code": response.status_code,
+                            }
+                        )
                         current_url = next_url
                         redirects_followed += 1
                         continue

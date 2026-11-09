@@ -14,13 +14,17 @@ class AIRecommendationVersion(Base):
     """
     Immutable version history snapshot for an AI recommendation proposal.
     """
+
     __tablename__ = "ai_recommendation_versions"
     __table_args__ = (
         UniqueConstraint("recommendation_id", "version_number", name="uq_rec_version"),
     )
 
     recommendation_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("ai_recommendations.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("ai_recommendations.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
     version_number: Mapped[int] = mapped_column(Integer, nullable=False)
     suggested_value: Mapped[str] = mapped_column(Text, nullable=False)
@@ -31,4 +35,6 @@ class AIRecommendationVersion(Base):
         String(36), ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True
     )
 
-    recommendation: Mapped["AIRecommendation"] = relationship("AIRecommendation", back_populates="versions")
+    recommendation: Mapped["AIRecommendation"] = relationship(
+        "AIRecommendation", back_populates="versions"
+    )

@@ -20,8 +20,12 @@ class RecommendationGenerateRequest(BaseModel):
         description="Type of recommendation to generate",
     )
     audit_run_id: Optional[str] = Field(default=None, description="Optional audit run ID context")
-    finding_id: Optional[str] = Field(default=None, description="Optional specific finding to address")
-    user_guidance: Optional[str] = Field(default=None, max_length=500, description="Optional user stylistic guidance")
+    finding_id: Optional[str] = Field(
+        default=None, description="Optional specific finding to address"
+    )
+    user_guidance: Optional[str] = Field(
+        default=None, max_length=500, description="Optional user stylistic guidance"
+    )
 
 
 class BulkGenerateRequest(BaseModel):
@@ -34,9 +38,15 @@ class BulkGenerateRequest(BaseModel):
 
 
 class RecommendationEditRequest(BaseModel):
-    suggested_value: Optional[str] = Field(default=None, max_length=5000, description="Manually edited suggestion")
-    status: Optional[RecommendationStatus] = Field(default=None, description="Updated proposal status")
-    user_guidance: Optional[str] = Field(default=None, max_length=500, description="User guidance notes")
+    suggested_value: Optional[str] = Field(
+        default=None, max_length=5000, description="Manually edited suggestion"
+    )
+    status: Optional[RecommendationStatus] = Field(
+        default=None, description="Updated proposal status"
+    )
+    user_guidance: Optional[str] = Field(
+        default=None, max_length=500, description="User guidance notes"
+    )
 
 
 class RecommendationRejectRequest(BaseModel):
@@ -44,7 +54,9 @@ class RecommendationRejectRequest(BaseModel):
 
 
 class RecommendationRegenerateRequest(BaseModel):
-    user_guidance: Optional[str] = Field(default=None, max_length=500, description="Specific revision instructions")
+    user_guidance: Optional[str] = Field(
+        default=None, max_length=500, description="Specific revision instructions"
+    )
 
 
 class AIRecommendationVersionRead(BaseModel):

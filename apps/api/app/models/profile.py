@@ -12,6 +12,7 @@ class Profile(Base):
     """
     User profile entity, mapped 1:1 with Supabase Auth auth.users.
     """
+
     __tablename__ = "profiles"
 
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)

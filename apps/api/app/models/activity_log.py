@@ -10,6 +10,7 @@ class ActivityLog(Base):
     """
     Audit trail for multi-tenant actions and state changes.
     """
+
     __tablename__ = "activity_logs"
 
     organization_id: Mapped[str] = mapped_column(
@@ -23,5 +24,7 @@ class ActivityLog(Base):
     entity_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)
     details_json: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
-    organization: Mapped["Organization"] = relationship("Organization", back_populates="activity_logs")
+    organization: Mapped["Organization"] = relationship(
+        "Organization", back_populates="activity_logs"
+    )
     user: Mapped[Optional["Profile"]] = relationship("Profile", back_populates="activity_logs")

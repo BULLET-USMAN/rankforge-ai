@@ -162,9 +162,6 @@ def test_ai_single_generate_and_review_flow(client, db_session):
     assert rej_resp.json()["status"] == "rejected"
 
 
-
-
-
 def test_ai_bulk_generate_and_cancellation(client, db_session, monkeypatch):
     mock_task = MagicMock(id="mock-celery-task-id-123")
     monkeypatch.setattr(celery_app, "send_task", lambda *args, **kwargs: mock_task)
@@ -235,12 +232,18 @@ def test_ai_cross_tenant_isolation(client, db_session):
     site_a_id = site_a["id"]
 
     # Seed crawled page
-    crawl_a = CrawlJob(project_id=site_a_id, organization_id=org_a_id, status="completed", config_json={})
+    crawl_a = CrawlJob(
+        project_id=site_a_id, organization_id=org_a_id, status="completed", config_json={}
+    )
     db_session.add(crawl_a)
     db_session.commit()
     page_a = CrawledPage(
-        job_id=crawl_a.id, project_id=site_a_id, url="https://site-a.com/page",
-        normalized_url="https://site-a.com/page", status_code=200, title="Org A Title"
+        job_id=crawl_a.id,
+        project_id=site_a_id,
+        url="https://site-a.com/page",
+        normalized_url="https://site-a.com/page",
+        status_code=200,
+        title="Org A Title",
     )
     db_session.add(page_a)
     db_session.commit()

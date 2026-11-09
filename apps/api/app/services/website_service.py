@@ -36,7 +36,9 @@ class WebsiteService:
             .first()
         )
         if existing:
-            raise ValueError(f"Domain '{normalized_domain}' is already registered in this workspace.")
+            raise ValueError(
+                f"Domain '{normalized_domain}' is already registered in this workspace."
+            )
 
         token = f"rankforge-site-verification={secrets.token_hex(16)}"
 

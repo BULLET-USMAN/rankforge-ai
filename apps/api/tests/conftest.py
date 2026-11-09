@@ -51,6 +51,7 @@ def db_session():
 @pytest.fixture
 def client(db_session):
     """Provides a TestClient with overridden get_db dependency and default test auth."""
+
     def override_get_db():
         try:
             yield db_session
@@ -69,6 +70,7 @@ def client(db_session):
 @pytest.fixture
 def unauthenticated_client(db_session):
     """Provides an unauthenticated TestClient with overridden get_db."""
+
     def override_get_db():
         try:
             yield db_session

@@ -1,3 +1,24 @@
+export interface GoogleAuthUrlResponse {
+  authorization_url: string;
+  state: string;
+  redirect_uri: string;
+}
+
+export interface GoogleIntegrationStatus {
+  is_connected: boolean;
+  connected_email?: string;
+  scopes: string[];
+  expires_at?: string;
+  is_active: boolean;
+  organization_id?: string;
+  website_project_id?: string;
+}
+
+export interface GoogleDisconnectResponse {
+  success: boolean;
+  message: string;
+}
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 let clientAuthToken: string | null = null;
@@ -869,4 +890,34 @@ export const api = {
 
   getAIQuotaDetails: (orgId: string) =>
     request<AIQuotaDetails>(`/api/v1/organizations/${orgId}/ai/quotas`),
+  // Google Search Console OAuth2 Integration
+  getGoogleOAuthAuthorizeUrl: (
+    orgId: string,
+    websiteProjectId?: string,
+    returnUrl?: string
+  ) => {
+    const params = new URLSearchParams({ organization_id: orgId });
+    if (websiteProjectId) params.append("website_project_id", websiteProjectId);
+    if (returnUrl) params.append("return_url", returnUrl);
+    return request<GoogleAuthUrlResponse>(
+      `/api/v1/integrations/google/authorize?${params.toString()}`
+    );
+  },
+
+  getGoogleOAuthStatus: (orgId: string, websiteProjectId?: string) => {
+    const params = new URLSearchParams({ organization_id: orgId });
+    if (websiteProjectId) params.append("website_project_id", websiteProjectId);
+    return request<GoogleIntegrationStatus>(
+      `/api/v1/integrations/google/status?${params.toString()}`
+    );
+  },
+
+  disconnectGoogleOAuth: (orgId: string, websiteProjectId?: string) => {
+    const params = new URLSearchParams({ organization_id: orgId });
+    if (websiteProjectId) params.append("website_project_id", websiteProjectId);
+    return request<GoogleDisconnectResponse>(
+      `/api/v1/integrations/google/disconnect?${params.toString()}`,
+      { method: "POST" }
+    );
+  },
 };

@@ -23,7 +23,10 @@ class MalformedJsonLdRule(BaseAuditRule):
         checked = 0
         passed = 0
 
-        has_sd_field = any(hasattr(p, "structured_data_json") and p.structured_data_json is not None for p in context.pages)
+        has_sd_field = any(
+            hasattr(p, "structured_data_json") and p.structured_data_json is not None
+            for p in context.pages
+        )
         if not has_sd_field or len(context.pages) == 0:
             return RuleEvaluationResult(
                 rule_id=self.rule_id,
@@ -83,7 +86,10 @@ class MissingSchemaTypeRule(BaseAuditRule):
         checked = 0
         passed = 0
 
-        has_sd_field = any(hasattr(p, "structured_data_json") and p.structured_data_json is not None for p in context.pages)
+        has_sd_field = any(
+            hasattr(p, "structured_data_json") and p.structured_data_json is not None
+            for p in context.pages
+        )
         if not has_sd_field or len(context.pages) == 0:
             return RuleEvaluationResult(
                 rule_id=self.rule_id,
@@ -137,7 +143,9 @@ class SitemapErrorRule(BaseAuditRule):
     category = AuditCategory.STRUCTURED_DATA_SITEMAPS
     default_severity = FindingSeverity.HIGH
     title = "XML Sitemap Returned Error Status"
-    description = "An XML sitemap discovered in robots.txt or standard paths failed to fetch or parse."
+    description = (
+        "An XML sitemap discovered in robots.txt or standard paths failed to fetch or parse."
+    )
 
     def evaluate(self, context: AuditEvaluationContext) -> RuleEvaluationResult:
         findings = []
@@ -155,7 +163,11 @@ class SitemapErrorRule(BaseAuditRule):
                         title=f"XML Sitemap Error ({sm.url})",
                         description=f"Sitemap {sm.url} returned HTTP {code} or failed: {getattr(sm, 'error_details', 'Unreachable')}.",
                         recommendation="Ensure XML sitemaps are reachable, return HTTP 200, and are served with valid XML content-type.",
-                        evidence={"sitemap_url": sm.url, "status_code": code, "error": getattr(sm, "error_details", None)},
+                        evidence={
+                            "sitemap_url": sm.url,
+                            "status_code": code,
+                            "error": getattr(sm, "error_details", None),
+                        },
                         page_url=sm.url,
                     )
                 )

@@ -12,10 +12,14 @@ class SitemapDocument(Base):
     """
     Sitemap documents discovered and parsed during a crawl job.
     """
+
     __tablename__ = "sitemap_documents"
 
     project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
     job_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("crawl_jobs.id", ondelete="CASCADE"), index=True, nullable=False

@@ -43,6 +43,7 @@ class GeminiProvider(AIProviderInterface):
             )
         if self._client is None:
             from google import genai
+
             self._client = genai.Client(api_key=self.api_key)
         return self._client
 
@@ -53,6 +54,7 @@ class GeminiProvider(AIProviderInterface):
             client = self._get_client()
             # Fast ping using minimal tokens
             from google.genai import types
+
             response = await asyncio.wait_for(
                 client.aio.models.generate_content(
                     model=self.model,
@@ -106,7 +108,9 @@ class GeminiProvider(AIProviderInterface):
                     meta = response.usage_metadata
                     input_tokens = getattr(meta, "prompt_token_count", 0) or 0
                     output_tokens = getattr(meta, "candidates_token_count", 0) or 0
-                    total_tokens = getattr(meta, "total_token_count", 0) or (input_tokens + output_tokens)
+                    total_tokens = getattr(meta, "total_token_count", 0) or (
+                        input_tokens + output_tokens
+                    )
                 else:
                     # Conservative fallback estimate: 4 chars per token
                     input_tokens = len(request.user_content + request.system_instruction) // 4
@@ -118,8 +122,12 @@ class GeminiProvider(AIProviderInterface):
                     parsed_json = json.loads(raw_text)
                     parsed_output = RawAIOptimizationOutput(**parsed_json)
                 except Exception as parse_err:
-                    logger.error(f"Failed to parse Gemini structured JSON: {parse_err}. Raw text: {raw_text[:200]}")
-                    raise AIValidationError(f"Invalid structured JSON received from AI provider: {parse_err}")
+                    logger.error(
+                        f"Failed to parse Gemini structured JSON: {parse_err}. Raw text: {raw_text[:200]}"
+                    )
+                    raise AIValidationError(
+                        f"Invalid structured JSON received from AI provider: {parse_err}"
+                    )
 
                 return AIProviderResponse(
                     raw_text=raw_text,
@@ -141,7 +149,9 @@ class GeminiProvider(AIProviderInterface):
             except Exception as e:
                 error_str = str(e).lower()
                 if "429" in error_str or "quota" in error_str or "resource_exhausted" in error_str:
-                    last_exception = AIRateLimitExceededError(f"Gemini API rate limit exceeded: {e}")
+                    last_exception = AIRateLimitExceededError(
+                        f"Gemini API rate limit exceeded: {e}"
+                    )
                 elif "401" in error_str or "api_key_invalid" in error_str:
                     raise AIProviderConfigurationError(f"Invalid or revoked Gemini API key: {e}")
                 else:
@@ -150,7 +160,7 @@ class GeminiProvider(AIProviderInterface):
 
             # Exponential backoff before next attempt
             if attempt < max_retries - 1:
-                await asyncio.sleep(2 ** attempt)
+                await asyncio.sleep(2**attempt)
 
         # Retries exhausted
         raise last_exception or AIProviderUnavailableError("Gemini service failed after retries")

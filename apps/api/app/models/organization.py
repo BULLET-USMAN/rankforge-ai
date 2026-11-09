@@ -15,6 +15,7 @@ class Organization(Base):
     Tenant isolation boundary. All website projects, crawl jobs, audit runs,
     recommendations, invitations, and billing belong to an organization.
     """
+
     __tablename__ = "organizations"
 
     name: Mapped[str] = mapped_column(String(255), nullable=False)

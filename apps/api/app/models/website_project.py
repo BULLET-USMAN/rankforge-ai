@@ -15,10 +15,9 @@ class WebsiteProject(Base):
     """
     Website project tracked within an organization.
     """
+
     __tablename__ = "website_projects"
-    __table_args__ = (
-        UniqueConstraint("organization_id", "domain", name="uq_org_domain"),
-    )
+    __table_args__ = (UniqueConstraint("organization_id", "domain", name="uq_org_domain"),)
 
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
@@ -33,7 +32,9 @@ class WebsiteProject(Base):
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     verification_status: Mapped[str] = mapped_column(String(50), default="pending", nullable=False)
     verification_token: Mapped[str] = mapped_column(String(128), nullable=False)
-    last_crawl_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_crawl_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     archived_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     organization: Mapped["Organization"] = relationship("Organization", back_populates="projects")

@@ -38,7 +38,11 @@ def test_initiate_challenge_token_generation(db_session):
     assert len(dns_verif.token) == 32
     assert dns_verif.txt_record_name == "_rankforge-challenge.verif-example.com"
     assert dns_verif.txt_record_value == f"rankforge-verification={dns_verif.token}"
-    exp = dns_verif.expires_at if dns_verif.expires_at.tzinfo else dns_verif.expires_at.replace(tzinfo=timezone.utc)
+    exp = (
+        dns_verif.expires_at
+        if dns_verif.expires_at.tzinfo
+        else dns_verif.expires_at.replace(tzinfo=timezone.utc)
+    )
     assert exp > datetime.now(timezone.utc)
 
     # 2. HTML File challenge
@@ -109,7 +113,9 @@ def test_verify_html_file_flow(db_session):
         status_code=200,
         text_content=f"rankforge-verification={verif.token}",
     )
-    with patch("app.services.crawler.safe_fetcher.SafeHttpFetcher.fetch_sync", return_value=mock_success):
+    with patch(
+        "app.services.crawler.safe_fetcher.SafeHttpFetcher.fetch_sync", return_value=mock_success
+    ):
         is_verified, msg, updated = VerificationService.verify_html_file(db_session, project)
         assert is_verified is True
         assert updated.status == "verified"

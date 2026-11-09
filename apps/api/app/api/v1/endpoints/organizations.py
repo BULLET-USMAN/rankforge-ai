@@ -31,9 +31,7 @@ def create_organization(
             detail=f"Organization slug '{payload.slug}' is already registered.",
         )
     try:
-        return OrganizationService.create_organization(
-            db, payload, creator_id=current_user.id
-        )
+        return OrganizationService.create_organization(db, payload, creator_id=current_user.id)
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

@@ -64,7 +64,15 @@ class AuditFinding:
         if not self.finding_fingerprint:
             # Generate deterministic fingerprint based on rule_id, page_url, and key evidence identifiers
             ev_id = ""
-            for k in ("tag", "attribute", "target_url", "status_code", "broken_url", "img_src", "heading_text"):
+            for k in (
+                "tag",
+                "attribute",
+                "target_url",
+                "status_code",
+                "broken_url",
+                "img_src",
+                "heading_text",
+            ):
                 if k in self.evidence:
                     ev_id = f"{k}={self.evidence[k]}"
                     break

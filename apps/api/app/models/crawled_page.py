@@ -14,13 +14,17 @@ class CrawledPage(Base):
     """
     Extracted page metadata and structural inventory captured during a crawl job.
     """
+
     __tablename__ = "crawled_pages"
 
     job_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("crawl_jobs.id", ondelete="CASCADE"), index=True, nullable=False
     )
     project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
 
     url: Mapped[str] = mapped_column(String(1024), index=True, nullable=False)
@@ -47,8 +51,12 @@ class CrawledPage(Base):
     images_missing_alt_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     images_json: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
 
-    structured_data_json: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
-    redirect_chain_json: Mapped[List[Dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    structured_data_json: Mapped[List[Dict[str, Any]]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
+    redirect_chain_json: Mapped[List[Dict[str, Any]]] = mapped_column(
+        JSON, default=list, nullable=False
+    )
 
     internal_links_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     external_links_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -57,4 +65,6 @@ class CrawledPage(Base):
     error_details: Mapped[Optional[str]] = mapped_column(String(1024), nullable=True)
 
     job: Mapped["CrawlJob"] = relationship("CrawlJob", back_populates="pages")
-    project: Mapped["WebsiteProject"] = relationship("WebsiteProject", back_populates="crawled_pages")
+    project: Mapped["WebsiteProject"] = relationship(
+        "WebsiteProject", back_populates="crawled_pages"
+    )

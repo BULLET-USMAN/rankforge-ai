@@ -56,70 +56,86 @@ class AuditService:
 
                 # Check security headers
                 if "strict-transport-security" not in resp.headers:
-                    issues.append({
-                        "code": "MISSING_HSTS",
-                        "severity": "warning",
-                        "title": "Missing HSTS Header",
-                        "description": "Strict-Transport-Security header is recommended to enforce HTTPS connections."
-                    })
+                    issues.append(
+                        {
+                            "code": "MISSING_HSTS",
+                            "severity": "warning",
+                            "title": "Missing HSTS Header",
+                            "description": "Strict-Transport-Security header is recommended to enforce HTTPS connections.",
+                        }
+                    )
                 if "x-content-type-options" not in resp.headers:
-                    issues.append({
-                        "code": "MISSING_X_CONTENT_TYPE_OPTIONS",
-                        "severity": "info",
-                        "title": "Missing X-Content-Type-Options Header",
-                        "description": "Prevents MIME-type sniffing."
-                    })
+                    issues.append(
+                        {
+                            "code": "MISSING_X_CONTENT_TYPE_OPTIONS",
+                            "severity": "info",
+                            "title": "Missing X-Content-Type-Options Header",
+                            "description": "Prevents MIME-type sniffing.",
+                        }
+                    )
 
                 # Check response time
                 if duration_ms > 2000:
-                    issues.append({
-                        "code": "HIGH_LATENCY",
-                        "severity": "warning",
-                        "title": "Slow Time-to-First-Byte",
-                        "description": f"Initial page response took {duration_ms}ms, which exceeds recommended 2000ms."
-                    })
+                    issues.append(
+                        {
+                            "code": "HIGH_LATENCY",
+                            "severity": "warning",
+                            "title": "Slow Time-to-First-Byte",
+                            "description": f"Initial page response took {duration_ms}ms, which exceeds recommended 2000ms.",
+                        }
+                    )
 
             except httpx.ConnectError as ce:
                 duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
                 status_code = 502
-                issues.append({
-                    "code": "CONNECTIVITY_FAILED",
-                    "severity": "critical",
-                    "title": "Connection Error",
-                    "description": f"Could not connect to host: {str(ce)}"
-                })
+                issues.append(
+                    {
+                        "code": "CONNECTIVITY_FAILED",
+                        "severity": "critical",
+                        "title": "Connection Error",
+                        "description": f"Could not connect to host: {str(ce)}",
+                    }
+                )
             except httpx.TimeoutException:
                 duration_ms = round(settings.CRAWLER_TIMEOUT_SECONDS * 1000, 2)
                 status_code = 504
-                issues.append({
-                    "code": "REQUEST_TIMEOUT",
-                    "severity": "critical",
-                    "title": "Audit Request Timed Out",
-                    "description": f"Target failed to respond within {settings.CRAWLER_TIMEOUT_SECONDS}s."
-                })
+                issues.append(
+                    {
+                        "code": "REQUEST_TIMEOUT",
+                        "severity": "critical",
+                        "title": "Audit Request Timed Out",
+                        "description": f"Target failed to respond within {settings.CRAWLER_TIMEOUT_SECONDS}s.",
+                    }
+                )
             except Exception as e:
                 duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
                 status_code = 500
-                issues.append({
-                    "code": "AUDIT_FAILURE",
-                    "severity": "critical",
-                    "title": "Audit Inspection Error",
-                    "description": str(e)
-                })
+                issues.append(
+                    {
+                        "code": "AUDIT_FAILURE",
+                        "severity": "critical",
+                        "title": "Audit Inspection Error",
+                        "description": str(e),
+                    }
+                )
 
             # 3. Check robots.txt presence
             try:
                 robots_url = f"{base_origin}/robots.txt"
                 robots_resp = await client.get(robots_url, timeout=5.0)
-                if robots_resp.status_code == 200 and "text/plain" in robots_resp.headers.get("content-type", ""):
+                if robots_resp.status_code == 200 and "text/plain" in robots_resp.headers.get(
+                    "content-type", ""
+                ):
                     robots_found = True
                 else:
-                    issues.append({
-                        "code": "ROBOTS_TXT_MISSING",
-                        "severity": "info",
-                        "title": "robots.txt Not Accessible",
-                        "description": "No valid robots.txt file found at standard root location."
-                    })
+                    issues.append(
+                        {
+                            "code": "ROBOTS_TXT_MISSING",
+                            "severity": "info",
+                            "title": "robots.txt Not Accessible",
+                            "description": "No valid robots.txt file found at standard root location.",
+                        }
+                    )
             except Exception:
                 pass
 
@@ -130,12 +146,14 @@ class AuditService:
                 if sitemap_resp.status_code == 200:
                     sitemap_found = True
                 else:
-                    issues.append({
-                        "code": "SITEMAP_MISSING",
-                        "severity": "info",
-                        "title": "sitemap.xml Not Found at Root",
-                        "description": "Standard sitemap.xml was not found at root path."
-                    })
+                    issues.append(
+                        {
+                            "code": "SITEMAP_MISSING",
+                            "severity": "info",
+                            "title": "sitemap.xml Not Found at Root",
+                            "description": "Standard sitemap.xml was not found at root path.",
+                        }
+                    )
             except Exception:
                 pass
 

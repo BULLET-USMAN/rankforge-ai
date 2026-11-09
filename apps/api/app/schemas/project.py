@@ -5,7 +5,9 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class WebsiteProjectBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
-    domain: str = Field(..., min_length=3, max_length=255, pattern=r"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+    domain: str = Field(
+        ..., min_length=3, max_length=255, pattern=r"^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+    )
     primary_url: str = Field(..., max_length=1024)
 
 

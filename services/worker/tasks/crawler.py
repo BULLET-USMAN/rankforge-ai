@@ -19,7 +19,9 @@ logger = logging.getLogger("rankforge.worker.crawler")
 )
 def execute_crawl(self, job_id: str):
     """Executes a website crawl job asynchronously in the background."""
-    logger.info("Starting background crawl execution: job_id=%s, task_id=%s", job_id, self.request.id)
+    logger.info(
+        "Starting background crawl execution: job_id=%s, task_id=%s", job_id, self.request.id
+    )
     db = SessionLocal()
     try:
         orchestrator = CrawlerOrchestrator(db=db, job_id=job_id)

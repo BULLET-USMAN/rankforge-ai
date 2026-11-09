@@ -13,30 +13,91 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlparse, urlunparse
 # File extensions that are clearly non-HTML web pages and should not be crawled as HTML
 EXCLUDED_EXTENSIONS: Set[str] = {
     # Images
-    ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".ico", ".bmp", ".tiff", ".avif",
+    ".png",
+    ".jpg",
+    ".jpeg",
+    ".gif",
+    ".webp",
+    ".svg",
+    ".ico",
+    ".bmp",
+    ".tiff",
+    ".avif",
     # Audio/Video
-    ".mp3", ".mp4", ".wav", ".avi", ".mov", ".wmv", ".mkv", ".webm", ".flv",
+    ".mp3",
+    ".mp4",
+    ".wav",
+    ".avi",
+    ".mov",
+    ".wmv",
+    ".mkv",
+    ".webm",
+    ".flv",
     # Documents / Archives
-    ".pdf", ".zip", ".tar", ".gz", ".7z", ".rar", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx",
+    ".pdf",
+    ".zip",
+    ".tar",
+    ".gz",
+    ".7z",
+    ".rar",
+    ".doc",
+    ".docx",
+    ".xls",
+    ".xlsx",
+    ".ppt",
+    ".pptx",
     # Code / Data assets
-    ".css", ".js", ".mjs", ".json", ".xml", ".rss", ".atom", ".woff", ".woff2", ".ttf", ".eot",
+    ".css",
+    ".js",
+    ".mjs",
+    ".json",
+    ".xml",
+    ".rss",
+    ".atom",
+    ".woff",
+    ".woff2",
+    ".ttf",
+    ".eot",
 }
 
 # Tracking query parameters that pollute URL uniqueness without changing content
 TRACKING_PARAMS: Set[str] = {
-    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content",
-    "gclid", "fbclid", "mc_cid", "mc_eid", "_ga", "_gl", "msclkid",
+    "utm_source",
+    "utm_medium",
+    "utm_campaign",
+    "utm_term",
+    "utm_content",
+    "gclid",
+    "fbclid",
+    "mc_cid",
+    "mc_eid",
+    "_ga",
+    "_gl",
+    "msclkid",
 }
 
 # Patterns indicating crawl traps or infinite loops
-CALENDAR_TRAP_PATTERN = re.compile(r"/(?:events|calendar|archive)/\d{4}/\d{1,2}(?:/\d{1,2})?", re.IGNORECASE)
+CALENDAR_TRAP_PATTERN = re.compile(
+    r"/(?:events|calendar|archive)/\d{4}/\d{1,2}(?:/\d{1,2})?", re.IGNORECASE
+)
 REPEATED_SEGMENT_PATTERN = re.compile(r"/(?P<seg>[^/]{2,})/(?P=seg)(?:/(?P=seg))+", re.IGNORECASE)
 
 # Sensitive paths to avoid crawling
 SENSITIVE_PATHS: Set[str] = {
-    "/login", "/logout", "/signin", "/signout", "/signup", "/register",
-    "/cart", "/checkout", "/admin", "/wp-admin", "/user/login", "/auth",
-    "/account", "/password/reset",
+    "/login",
+    "/logout",
+    "/signin",
+    "/signout",
+    "/signup",
+    "/register",
+    "/cart",
+    "/checkout",
+    "/admin",
+    "/wp-admin",
+    "/user/login",
+    "/auth",
+    "/account",
+    "/password/reset",
 }
 
 
@@ -59,7 +120,9 @@ class UrlNormalizer:
             return None
 
         raw_url = raw_url.strip()
-        if not raw_url or raw_url.startswith(("#", "javascript:", "mailto:", "tel:", "data:", "ftp:")):
+        if not raw_url or raw_url.startswith(
+            ("#", "javascript:", "mailto:", "tel:", "data:", "ftp:")
+        ):
             return None
 
         # Resolve relative URLs against base
@@ -82,7 +145,9 @@ class UrlNormalizer:
             return None
 
         # Strip standard default ports
-        if (scheme == "http" and netloc.endswith(":80")) or (scheme == "https" and netloc.endswith(":443")):
+        if (scheme == "http" and netloc.endswith(":80")) or (
+            scheme == "https" and netloc.endswith(":443")
+        ):
             netloc = netloc.split(":")[0]
 
         # Path normalization: collapse multiple slashes, strip fragment
@@ -97,31 +162,27 @@ class UrlNormalizer:
         if parsed.query:
             query_pairs = parse_qsl(parsed.query, keep_blank_values=False)
             filtered_pairs = [
-                (k.lower(), v) for k, v in query_pairs
-                if k.lower() not in TRACKING_PARAMS
+                (k.lower(), v) for k, v in query_pairs if k.lower() not in TRACKING_PARAMS
             ]
             if filtered_pairs:
                 filtered_pairs.sort(key=lambda x: (x[0], x[1]))
                 query = urlencode(filtered_pairs)
 
         # Build clean URL without fragment
-        clean_url = urlunparse((
-            scheme,
-            netloc,
-            path,
-            "",  # params
-            query,
-            ""   # fragment always stripped
-        ))
+        clean_url = urlunparse(
+            (
+                scheme,
+                netloc,
+                path,
+                "",  # params
+                query,
+                "",  # fragment always stripped
+            )
+        )
         return clean_url
 
     @classmethod
-    def is_in_scope(
-        cls,
-        url: str,
-        target_domain: str,
-        allow_subdomains: bool = False
-    ) -> bool:
+    def is_in_scope(cls, url: str, target_domain: str, allow_subdomains: bool = False) -> bool:
         """Determines if a URL belongs to the target website project scope."""
         clean_target = cls.normalize_domain(target_domain)
         try:

@@ -77,7 +77,11 @@ class OrphanPageRule(BaseAuditRule):
                         title="Orphan Page Detected",
                         description=f"Page {page.url} has 0 discovered incoming internal links from within the website structure.",
                         recommendation="Link to this page from relevant contextually related content or navigation menus to distribute link equity and assist discovery.",
-                        evidence={"url": page.url, "discovery_method": page.discovery_method, "inlinks_count": 0},
+                        evidence={
+                            "url": page.url,
+                            "discovery_method": page.discovery_method,
+                            "inlinks_count": 0,
+                        },
                         page_url=page.url,
                     )
                 )
@@ -99,7 +103,9 @@ class EmptyAnchorTextRule(BaseAuditRule):
     category = AuditCategory.SITE_STRUCTURE
     default_severity = FindingSeverity.LOW
     title = "Empty Anchor Text on Internal Link"
-    description = "Internal hyperlinks lack anchor text or use empty whitespace, missing keyword signals."
+    description = (
+        "Internal hyperlinks lack anchor text or use empty whitespace, missing keyword signals."
+    )
 
     def evaluate(self, context: AuditEvaluationContext) -> RuleEvaluationResult:
         findings = []
@@ -110,8 +116,10 @@ class EmptyAnchorTextRule(BaseAuditRule):
             checked += 1
             links = page.links_json or []
             empty_links = [
-                lnk for lnk in links
-                if lnk.get("is_internal") and (not lnk.get("anchor_text") or not lnk.get("anchor_text").strip())
+                lnk
+                for lnk in links
+                if lnk.get("is_internal")
+                and (not lnk.get("anchor_text") or not lnk.get("anchor_text").strip())
             ]
             if empty_links:
                 pages_with_empty.add(page.url)

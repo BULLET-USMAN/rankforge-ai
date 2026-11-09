@@ -79,7 +79,9 @@ class InvitationService:
         return invitation, raw_token
 
     @classmethod
-    def list_pending_invitations(cls, db: Session, organization_id: str) -> List[OrganizationInvitation]:
+    def list_pending_invitations(
+        cls, db: Session, organization_id: str
+    ) -> List[OrganizationInvitation]:
         now = datetime.now(timezone.utc)
         return (
             db.query(OrganizationInvitation)

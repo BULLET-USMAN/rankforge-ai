@@ -10,6 +10,7 @@ class UsageEvent(Base):
     """
     Metered usage tracking (audit crawls, keyword checks, API calls).
     """
+
     __tablename__ = "usage_events"
 
     organization_id: Mapped[str] = mapped_column(
@@ -19,4 +20,6 @@ class UsageEvent(Base):
     count: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
     metadata_json: Mapped[Dict[str, Any]] = mapped_column(JSON, default=dict, nullable=False)
 
-    organization: Mapped["Organization"] = relationship("Organization", back_populates="usage_events")
+    organization: Mapped["Organization"] = relationship(
+        "Organization", back_populates="usage_events"
+    )

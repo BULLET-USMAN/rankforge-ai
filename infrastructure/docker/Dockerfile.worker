@@ -20,4 +20,9 @@ COPY services/ /app/services/
 
 ENV PYTHONPATH=/app/apps/api:/app/services/worker:/app
 
-CMD ["celery", "-A", "celery_app.celery_app", "worker", "--loglevel=INFO"]
+# Create non-root system user for production container security
+RUN groupadd -r rankforge && useradd -r -g rankforge rankforge && chown -R rankforge:rankforge /app
+USER rankforge
+
+# Run Celery worker as background daemon process without exposing HTTP ports
+CMD ["sh", "-c", "celery -A celery_app.celery_app worker --loglevel=${CELERY_LOG_LEVEL:-INFO} --concurrency=${CELERY_CONCURRENCY:-2}"]

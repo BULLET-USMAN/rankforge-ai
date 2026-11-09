@@ -178,9 +178,7 @@ async def bulk_generate_recommendations(
             db.commit()
             db.refresh(job)
         except Exception as exc:
-            logger.warning(
-                "Celery dispatch failed (%s), job %s will remain queued.", exc, job.id
-            )
+            logger.warning("Celery dispatch failed (%s), job %s will remain queued.", exc, job.id)
 
     return job
 
@@ -346,7 +344,9 @@ def approve_recommendation(
     membership: OrganizationMember = Depends(RequireOrgRole("admin")),
 ):
     rec = _get_recommendation_or_404(db, org_id, recommendation_id)
-    return RecommendationReviewService.approve(db=db, recommendation=rec, user_id=membership.user_id)
+    return RecommendationReviewService.approve(
+        db=db, recommendation=rec, user_id=membership.user_id
+    )
 
 
 @router.post(

@@ -35,7 +35,9 @@ class OrganizationBase(BaseModel):
             return None
         v = v.lower().strip()
         if not re.match(r"^[a-z0-9-]+$", v):
-            raise ValueError("Slug must contain only lowercase alphanumeric characters and hyphens.")
+            raise ValueError(
+                "Slug must contain only lowercase alphanumeric characters and hyphens."
+            )
         if v in RESERVED_SLUGS:
             raise ValueError(f"The slug '{v}' is reserved and cannot be used.")
         return v

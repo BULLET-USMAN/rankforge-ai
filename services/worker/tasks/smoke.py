@@ -30,7 +30,7 @@ def smoke_task(self, x: int = 21, y: int = 21):
         }
     except Exception as exc:
         logger.error(f"Task failed with error: {exc}. Retrying...")
-        raise self.retry(exc=exc, countdown=2 ** self.request.retries)
+        raise self.retry(exc=exc, countdown=2**self.request.retries)
 
 
 @shared_task(name="tasks.smoke.ping_task")

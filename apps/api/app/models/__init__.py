@@ -9,6 +9,7 @@ from app.models.audit_job import AuditJob
 from app.models.audit_result import AuditResult
 from app.models.crawl_job import CrawlJob
 from app.models.crawled_page import CrawledPage
+from app.models.google_integration import GoogleIntegration
 from app.models.organization import Organization
 from app.models.organization_invitation import OrganizationInvitation
 from app.models.organization_member import OrganizationMember
@@ -30,8 +31,8 @@ __all__ = [
     "AIRecommendationVersion",
     "AIUsageRecord",
     "AIQuotaReservation",
-
     "Base",
+    "GoogleIntegration",
     "Profile",
     "Organization",
     "OrganizationMember",

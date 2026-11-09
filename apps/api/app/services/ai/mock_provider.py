@@ -117,7 +117,9 @@ class MockAIProvider(AIProviderInterface):
             output = RawAIOptimizationOutput(
                 suggested_value=suggested,
                 explanation="Enhances user scannability and structural clarity without inventing unverified facts.",
-                supporting_evidence=["Observed text density and section grouping in crawl extract."],
+                supporting_evidence=[
+                    "Observed text density and section grouping in crawl extract."
+                ],
                 limitations="Recommendations are structural; domain experts should verify editorial voice.",
             )
 
@@ -132,13 +134,17 @@ class MockAIProvider(AIProviderInterface):
 
             suggested_links = []
             for t in targets:
-                suggested_links.append(f"Target: {t} | Anchor: relevant guide | Placement: Related Resources section")
+                suggested_links.append(
+                    f"Target: {t} | Anchor: relevant guide | Placement: Related Resources section"
+                )
 
             suggested = "\n".join(suggested_links)
             output = RawAIOptimizationOutput(
                 suggested_value=suggested,
                 explanation="Links closely related internal pages using descriptive anchor text, improving site navigation.",
-                supporting_evidence=[f"Selected strictly from {len(targets)} authorized internal crawled URLs."],
+                supporting_evidence=[
+                    f"Selected strictly from {len(targets)} authorized internal crawled URLs."
+                ],
                 limitations="Verify that destination page context naturally supports the recommended link placement.",
             )
 
@@ -146,7 +152,7 @@ class MockAIProvider(AIProviderInterface):
             suggested = (
                 "Action item: Perform manual visual inspection of flagged images. "
                 "For informational images (diagrams, charts), provide brief descriptive text. "
-                "For purely decorative styling elements, retain empty alt attribute (alt=\"\")."
+                'For purely decorative styling elements, retain empty alt attribute (alt="").'
             )
             output = RawAIOptimizationOutput(
                 suggested_value=suggested,
@@ -154,7 +160,9 @@ class MockAIProvider(AIProviderInterface):
                     "Because raw image pixels are not evaluated by the crawler, descriptive text cannot be safely inferred. "
                     "Decorative images must retain empty alt attributes for accessibility compliance."
                 ),
-                supporting_evidence=["Identified image tags without alt attributes in HTML source."],
+                supporting_evidence=[
+                    "Identified image tags without alt attributes in HTML source."
+                ],
                 limitations="Requires manual human visual inspection of image subject matter.",
             )
 

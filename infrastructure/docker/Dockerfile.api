@@ -20,6 +20,11 @@ COPY services/ /app/services/
 
 ENV PYTHONPATH=/app/apps/api:/app
 
+# Create non-root system user for production container security
+RUN groupadd -r rankforge && useradd -r -g rankforge rankforge && chown -R rankforge:rankforge /app
+USER rankforge
+
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Production start command: dynamically binds to Railway assigned $PORT, enables multi-worker concurrency and proxy headers
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WEB_CONCURRENCY:-2} --proxy-headers --forwarded-allow-ips='*'"]

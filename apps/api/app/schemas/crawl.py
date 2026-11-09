@@ -10,12 +10,18 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class CrawlJobCreate(BaseModel):
     """Payload to initiate a new asynchronous crawl."""
-    max_pages: int = Field(default=50, ge=1, le=100, description="Page limit budget (max 100 for Phase 3)")
-    max_depth: int = Field(default=3, ge=1, le=5, description="Maximum crawl traversal depth (max 5)")
+
+    max_pages: int = Field(
+        default=50, ge=1, le=100, description="Page limit budget (max 100 for Phase 3)"
+    )
+    max_depth: int = Field(
+        default=3, ge=1, le=5, description="Maximum crawl traversal depth (max 5)"
+    )
 
 
 class CrawlJobRead(BaseModel):
     """Summary of a crawl job execution and metrics."""
+
     id: str
     project_id: str
     organization_id: str
@@ -38,6 +44,7 @@ class CrawlJobRead(BaseModel):
 
 class CrawledPageRead(BaseModel):
     """Summary of an individual crawled web page."""
+
     id: str
     job_id: str
     project_id: str
@@ -65,17 +72,20 @@ class CrawledPageRead(BaseModel):
 
 class CrawledPageDetail(CrawledPageRead):
     """Full detail of a crawled page, including discovered outbound links."""
+
     links_json: List[Dict[str, Any]] = []
 
 
 class CrawlJobListResponse(BaseModel):
     """List of crawl jobs for a project."""
+
     items: List[CrawlJobRead]
     total: int
 
 
 class CrawledPageListResponse(BaseModel):
     """Paginated list of crawled pages for a crawl job."""
+
     items: List[CrawledPageRead]
     total: int
     page: int

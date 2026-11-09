@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 
 from app.api.v1.endpoints.health import router as health_router
 from app.api.v1.router import api_router
@@ -12,14 +13,20 @@ from app.core.middleware import RequestTracingMiddleware
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
+    debug=settings.DEBUG,
     description=(
         "Production-Oriented SEO Intelligence & Website Optimization Platform API. "
         "Engineered for multi-tenant isolation, automated technical auditing, and safe remediation."
     ),
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
-    docs_url=f"{settings.API_V1_STR}/docs",
-    redoc_url=f"{settings.API_V1_STR}/redoc",
+    docs_url=f"{settings.API_V1_STR}/docs"
+    if settings.DEBUG or settings.ENVIRONMENT != "production"
+    else None,
+    redoc_url=f"{settings.API_V1_STR}/redoc"
+    if settings.DEBUG or settings.ENVIRONMENT != "production"
+    else None,
 )
+
 
 # Custom Exception Handler for Pydantic Validation Errors
 @app.exception_handler(RequestValidationError)
@@ -51,8 +58,15 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         headers={"X-Request-ID": request_id},
     )
 
+
 # Middlewares
+# 1. Trusted proxy headers for reverse proxy deployments (Railway, Cloudflare, etc.)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts="*")
+
+# 2. Request tracing, latency measurement, and security headers
 app.add_middleware(RequestTracingMiddleware)
+
+# 3. Cross-Origin Resource Sharing (CORS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
@@ -62,7 +76,7 @@ app.add_middleware(
     expose_headers=["X-Request-ID", "X-Process-Time-Ms"],
 )
 
-# Root Health Endpoints (/health/live, /health/ready)
+# Root Health Endpoints (/health, /health/live, /health/ready)
 app.include_router(health_router)
 
 # API v1 Router (/api/v1/...)
@@ -77,5 +91,7 @@ def root():
         "tagline": "Search intelligence. Engineered for growth.",
         "status": "operational",
         "version": settings.VERSION,
-        "docs": f"{settings.API_V1_STR}/docs",
+        "docs": f"{settings.API_V1_STR}/docs"
+        if (settings.DEBUG or settings.ENVIRONMENT != "production")
+        else "disabled in production",
     }

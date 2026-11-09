@@ -16,7 +16,9 @@ class InternalDeadLinkRule(BaseAuditRule):
     category = AuditCategory.LINKS_HTTP
     default_severity = FindingSeverity.CRITICAL
     title = "Internal Link to Broken Page (4xx)"
-    description = "An internal link points to a page that returns a 4xx client error (e.g., 404 Not Found)."
+    description = (
+        "An internal link points to a page that returns a 4xx client error (e.g., 404 Not Found)."
+    )
 
     def evaluate(self, context: AuditEvaluationContext) -> RuleEvaluationResult:
         findings = []
@@ -32,7 +34,9 @@ class InternalDeadLinkRule(BaseAuditRule):
                 target_url = link.get("target_url") or link.get("url")
                 if not target_url:
                     continue
-                target_page = context.url_to_page.get(target_url) or context.normalized_url_to_page.get(target_url)
+                target_page = context.url_to_page.get(
+                    target_url
+                ) or context.normalized_url_to_page.get(target_url)
                 if target_page and 400 <= target_page.status_code < 500:
                     broken_targets.add(target_url)
                     findings.append(
@@ -82,7 +86,9 @@ class InternalServerErrorLinkRule(BaseAuditRule):
                 target_url = link.get("target_url") or link.get("url")
                 if not target_url:
                     continue
-                target_page = context.url_to_page.get(target_url) or context.normalized_url_to_page.get(target_url)
+                target_page = context.url_to_page.get(
+                    target_url
+                ) or context.normalized_url_to_page.get(target_url)
                 if target_page and target_page.status_code >= 500:
                     findings.append(
                         self.create_finding(
@@ -130,7 +136,9 @@ class InternalRedirectLinkRule(BaseAuditRule):
                 target_url = link.get("target_url") or link.get("url")
                 if not target_url:
                     continue
-                target_page = context.url_to_page.get(target_url) or context.normalized_url_to_page.get(target_url)
+                target_page = context.url_to_page.get(
+                    target_url
+                ) or context.normalized_url_to_page.get(target_url)
                 if target_page and 300 <= target_page.status_code < 400:
                     findings.append(
                         self.create_finding(

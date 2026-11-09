@@ -27,6 +27,7 @@ BLOCKED_TLDS = {
 
 class DomainValidationError(Exception):
     """Raised when a user-submitted domain or URL fails validation."""
+
     pass
 
 
@@ -65,15 +66,21 @@ class DomainNormalizer:
         # Check scheme
         scheme = parsed.scheme.lower()
         if scheme not in {"http", "https"}:
-            raise DomainValidationError(f"Unsupported scheme '{scheme}'. Only HTTP and HTTPS are permitted.")
+            raise DomainValidationError(
+                f"Unsupported scheme '{scheme}'. Only HTTP and HTTPS are permitted."
+            )
 
         # Reject embedded credentials (user:pass@host)
         if parsed.username or parsed.password:
-            raise DomainValidationError("Embedded credentials (user:pass@) are strictly prohibited.")
+            raise DomainValidationError(
+                "Embedded credentials (user:pass@) are strictly prohibited."
+            )
 
         # Reject non-standard ports
         if parsed.port and parsed.port not in {80, 443, 8080, 8443}:
-            raise DomainValidationError(f"Port {parsed.port} is not permitted for monitored websites.")
+            raise DomainValidationError(
+                f"Port {parsed.port} is not permitted for monitored websites."
+            )
 
         hostname = parsed.hostname
         if not hostname:
@@ -89,15 +96,23 @@ class DomainNormalizer:
         try:
             ip = ipaddress.ip_address(hostname)
             if ip.is_private:
-                raise DomainValidationError("Private network IP addresses (RFC 1918) cannot be added as websites.")
+                raise DomainValidationError(
+                    "Private network IP addresses (RFC 1918) cannot be added as websites."
+                )
             if ip.is_loopback:
                 raise DomainValidationError("Loopback addresses cannot be added as websites.")
             if ip.is_link_local:
-                raise DomainValidationError("Link-local addresses (cloud metadata) cannot be added as websites.")
+                raise DomainValidationError(
+                    "Link-local addresses (cloud metadata) cannot be added as websites."
+                )
             if ip.is_multicast or ip.is_reserved or ip.is_unspecified:
-                raise DomainValidationError("Reserved or multicast addresses cannot be added as websites.")
+                raise DomainValidationError(
+                    "Reserved or multicast addresses cannot be added as websites."
+                )
             if str(ip) == "169.254.169.254":
-                raise DomainValidationError("Cloud metadata IP (169.254.169.254) is strictly prohibited.")
+                raise DomainValidationError(
+                    "Cloud metadata IP (169.254.169.254) is strictly prohibited."
+                )
         except ValueError:
             # Not an IP literal, it is a domain name. Proceed with domain checks.
             pass
@@ -105,11 +120,15 @@ class DomainNormalizer:
         # Check domain syntax: must have at least one dot and valid TLD
         parts = hostname.split(".")
         if len(parts) < 2 or not all(parts):
-            raise DomainValidationError("Domain must include a valid second-level name and top-level domain (e.g., example.com).")
+            raise DomainValidationError(
+                "Domain must include a valid second-level name and top-level domain (e.g., example.com)."
+            )
 
         tld = parts[-1]
         if tld in BLOCKED_TLDS:
-            raise DomainValidationError(f"Top-level domain '.{tld}' is reserved for private or internal networks.")
+            raise DomainValidationError(
+                f"Top-level domain '.{tld}' is reserved for private or internal networks."
+            )
 
         # Validate label characters (letters, numbers, hyphens)
         domain_regex = r"^([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$"

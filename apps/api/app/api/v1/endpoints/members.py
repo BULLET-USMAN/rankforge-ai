@@ -26,9 +26,7 @@ def list_workspace_members(
 ):
     """List all members of the organization with their profile info and roles."""
     members = (
-        db.query(OrganizationMember)
-        .filter(OrganizationMember.organization_id == org_id)
-        .all()
+        db.query(OrganizationMember).filter(OrganizationMember.organization_id == org_id).all()
     )
 
     result = []

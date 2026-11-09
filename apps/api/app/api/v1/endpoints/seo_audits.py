@@ -247,7 +247,9 @@ def list_audit_findings(
     severity: Optional[str] = Query(None, description="Filter by severity"),
     rule_id: Optional[str] = Query(None, description="Filter by rule ID"),
     page_url: Optional[str] = Query(None, description="Filter by exact page URL"),
-    search: Optional[str] = Query(None, description="Text search across title, description, recommendation"),
+    search: Optional[str] = Query(
+        None, description="Text search across title, description, recommendation"
+    ),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     membership: OrganizationMember = Depends(RequireOrgRole("viewer")),
@@ -313,9 +315,7 @@ def get_audit_category_scores(
     _get_audit_or_404(db, org_id, audit_id)
 
     scores = (
-        db.query(SEOAuditCategoryScore)
-        .filter(SEOAuditCategoryScore.audit_run_id == audit_id)
-        .all()
+        db.query(SEOAuditCategoryScore).filter(SEOAuditCategoryScore.audit_run_id == audit_id).all()
     )
     return scores
 
@@ -387,11 +387,7 @@ def list_audited_pages(
     """Lists the pages evaluated in this audit run along with per-page finding counts."""
     audit = _get_audit_or_404(db, org_id, audit_id)
 
-    pages = (
-        db.query(CrawledPage)
-        .filter(CrawledPage.job_id == audit.crawl_job_id)
-        .all()
-    )
+    pages = db.query(CrawledPage).filter(CrawledPage.job_id == audit.crawl_job_id).all()
 
     # Count findings per page_url
     counts_by_url: dict[str, int] = {}

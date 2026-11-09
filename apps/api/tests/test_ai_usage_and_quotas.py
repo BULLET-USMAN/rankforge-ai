@@ -14,7 +14,9 @@ from app.services.ai.usage_meter import AIUsageMeter
 def test_estimate_cost_calculation():
     # 10,000 input tokens, 2,000 output tokens
     cost = AIUsageMeter.estimate_cost(10000, 2000)
-    expected = (10000 / 1e6) * settings.AI_ESTIMATED_INPUT_COST_PER_MILLION + (2000 / 1e6) * settings.AI_ESTIMATED_OUTPUT_COST_PER_MILLION
+    expected = (10000 / 1e6) * settings.AI_ESTIMATED_INPUT_COST_PER_MILLION + (
+        2000 / 1e6
+    ) * settings.AI_ESTIMATED_OUTPUT_COST_PER_MILLION
     assert cost == round(expected, 6)
     assert cost > 0
 
@@ -78,13 +80,25 @@ def test_daily_request_limit_enforcement(db_session: Session, monkeypatch):
 
     # 1st request
     AIUsageMeter.record_usage(
-        db=db_session, organization_id=org.id, user_id=None, job_id=None,
-        request_type="test", input_tokens=10, output_tokens=10, model="mock"
+        db=db_session,
+        organization_id=org.id,
+        user_id=None,
+        job_id=None,
+        request_type="test",
+        input_tokens=10,
+        output_tokens=10,
+        model="mock",
     )
     # 2nd request
     AIUsageMeter.record_usage(
-        db=db_session, organization_id=org.id, user_id=None, job_id=None,
-        request_type="test", input_tokens=10, output_tokens=10, model="mock"
+        db=db_session,
+        organization_id=org.id,
+        user_id=None,
+        job_id=None,
+        request_type="test",
+        input_tokens=10,
+        output_tokens=10,
+        model="mock",
     )
 
     # 3rd request should fail quota check

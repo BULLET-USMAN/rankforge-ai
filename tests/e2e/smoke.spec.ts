@@ -159,4 +159,15 @@ test.describe("RankForge AI — Phase 4 Master Smoke Suite", () => {
     // Capture screenshot
     await page.screenshot({ path: "test-results/screenshots/desktop-ai-optimization-page.png", fullPage: true });
   });
+
+  test("15. Settings page renders Google Search Console Synchronization and OAuth controls", async ({ page }) => {
+    await page.goto("/dashboard/settings");
+    await expect(page.getByRole("heading", { name: /Organization Settings/i })).toBeVisible();
+    await expect(page.getByText(/Google Search Console Synchronization/i)).toBeVisible();
+    await expect(page.getByText("Connect Search Console Property")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Connect Google Search Console/i })).toBeVisible();
+
+    // Capture screenshot
+    await page.screenshot({ path: "test-results/screenshots/desktop-settings-google-oauth.png", fullPage: true });
+  });
 });

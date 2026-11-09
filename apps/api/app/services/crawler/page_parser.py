@@ -67,12 +67,7 @@ class PageParser:
     """Parses HTML content for SEO technical audit attributes."""
 
     @classmethod
-    def parse_html(
-        cls,
-        html_content: str,
-        current_url: str,
-        target_domain: str
-    ) -> ParsedPageData:
+    def parse_html(cls, html_content: str, current_url: str, target_domain: str) -> ParsedPageData:
         """Parses HTML string into structured SEO attributes."""
         result = ParsedPageData()
 
@@ -105,7 +100,14 @@ class PageParser:
             result.meta_description = content[:1000] if content else None
 
         # 3. Canonical Link
-        canonical_tag = soup.find("link", attrs={"rel": lambda x: x and "canonical" in [v.lower() for v in (x if isinstance(x, list) else [x])]})
+        canonical_tag = soup.find(
+            "link",
+            attrs={
+                "rel": lambda x: (
+                    x and "canonical" in [v.lower() for v in (x if isinstance(x, list) else [x])]
+                )
+            },
+        )
         if canonical_tag and canonical_tag.get("href"):
             raw_canonical = canonical_tag["href"].strip()
             resolved_canonical = urljoin(current_url, raw_canonical)
@@ -118,7 +120,14 @@ class PageParser:
 
         # 5. Heading Structure (H1–H6)
         heading_counts = {"h1": 0, "h2": 0, "h3": 0, "h4": 0, "h5": 0, "h6": 0}
-        heading_texts: Dict[str, List[str]] = {"h1": [], "h2": [], "h3": [], "h4": [], "h5": [], "h6": []}
+        heading_texts: Dict[str, List[str]] = {
+            "h1": [],
+            "h2": [],
+            "h3": [],
+            "h4": [],
+            "h5": [],
+            "h6": [],
+        }
 
         for level in ("h1", "h2", "h3", "h4", "h5", "h6"):
             tags = soup.find_all(level)
@@ -150,26 +159,32 @@ class PageParser:
 
             if not has_alt or alt_val is None:
                 missing_alt += 1
-                images_list.append({
-                    "src": resolved_src[:500],
-                    "alt": None,
-                    "has_alt": False,
-                    "is_empty_alt": False,
-                })
+                images_list.append(
+                    {
+                        "src": resolved_src[:500],
+                        "alt": None,
+                        "has_alt": False,
+                        "is_empty_alt": False,
+                    }
+                )
             else:
-                is_empty = (str(alt_val).strip() == "")
-                images_list.append({
-                    "src": resolved_src[:500],
-                    "alt": str(alt_val).strip()[:300],
-                    "has_alt": True,
-                    "is_empty_alt": is_empty,
-                })
+                is_empty = str(alt_val).strip() == ""
+                images_list.append(
+                    {
+                        "src": resolved_src[:500],
+                        "alt": str(alt_val).strip()[:300],
+                        "has_alt": True,
+                        "is_empty_alt": is_empty,
+                    }
+                )
 
         result.images_missing_alt_count = missing_alt
         result.images_json = images_list
 
         # 7. Structured Data (JSON-LD)
-        ld_scripts = soup.find_all("script", attrs={"type": lambda x: x and "application/ld+json" in x.lower()})
+        ld_scripts = soup.find_all(
+            "script", attrs={"type": lambda x: x and "application/ld+json" in x.lower()}
+        )
         structured_data = []
 
         for script in ld_scripts[:MAX_JSONLD_BLOCKS]:
@@ -179,12 +194,14 @@ class PageParser:
 
             raw_trimmed = raw_content.strip()
             if len(raw_trimmed) > MAX_JSONLD_BYTES:
-                structured_data.append({
-                    "raw_type": None,
-                    "is_valid_json": False,
-                    "data": None,
-                    "error": "JSON-LD block exceeds maximum 64KB limit",
-                })
+                structured_data.append(
+                    {
+                        "raw_type": None,
+                        "is_valid_json": False,
+                        "data": None,
+                        "error": "JSON-LD block exceeds maximum 64KB limit",
+                    }
+                )
                 continue
 
             try:
@@ -192,22 +209,30 @@ class PageParser:
                 schema_type = None
                 if isinstance(parsed_json, dict):
                     schema_type = parsed_json.get("@type")
-                elif isinstance(parsed_json, list) and parsed_json and isinstance(parsed_json[0], dict):
+                elif (
+                    isinstance(parsed_json, list)
+                    and parsed_json
+                    and isinstance(parsed_json[0], dict)
+                ):
                     schema_type = parsed_json[0].get("@type")
 
-                structured_data.append({
-                    "raw_type": str(schema_type) if schema_type else None,
-                    "is_valid_json": True,
-                    "data": parsed_json,
-                    "error": None,
-                })
+                structured_data.append(
+                    {
+                        "raw_type": str(schema_type) if schema_type else None,
+                        "is_valid_json": True,
+                        "data": parsed_json,
+                        "error": None,
+                    }
+                )
             except Exception as exc:
-                structured_data.append({
-                    "raw_type": None,
-                    "is_valid_json": False,
-                    "data": None,
-                    "error": f"Invalid JSON syntax: {str(exc)}",
-                })
+                structured_data.append(
+                    {
+                        "raw_type": None,
+                        "is_valid_json": False,
+                        "data": None,
+                        "error": f"Invalid JSON syntax: {str(exc)}",
+                    }
+                )
 
         result.structured_data_json = structured_data
 
@@ -217,7 +242,9 @@ class PageParser:
 
         for a_tag in soup.find_all("a", href=True):
             raw_href = a_tag["href"].strip()
-            if not raw_href or raw_href.startswith(("#", "javascript:", "mailto:", "tel:", "data:", "ftp:")):
+            if not raw_href or raw_href.startswith(
+                ("#", "javascript:", "mailto:", "tel:", "data:", "ftp:")
+            ):
                 continue
 
             normalized_link = UrlNormalizer.normalize_url(raw_href, base_url=current_url)
@@ -236,23 +263,27 @@ class PageParser:
                     seen_internal.add(normalized_link)
                     result.internal_links.append(normalized_link)
                     if len(result.links_detail) < MAX_LINKS_STORED:
-                        result.links_detail.append({
-                            "url": normalized_link,
-                            "type": "internal",
-                            "text": anchor_text,
-                            "rel": rel_str,
-                        })
+                        result.links_detail.append(
+                            {
+                                "url": normalized_link,
+                                "type": "internal",
+                                "text": anchor_text,
+                                "rel": rel_str,
+                            }
+                        )
             else:
                 result.external_links_count += 1
                 if normalized_link not in seen_external:
                     seen_external.add(normalized_link)
                     result.external_links.append(normalized_link)
                     if len(result.links_detail) < MAX_LINKS_STORED:
-                        result.links_detail.append({
-                            "url": normalized_link,
-                            "type": "external",
-                            "text": anchor_text,
-                            "rel": rel_str,
-                        })
+                        result.links_detail.append(
+                            {
+                                "url": normalized_link,
+                                "type": "external",
+                                "text": anchor_text,
+                                "rel": rel_str,
+                            }
+                        )
 
         return result

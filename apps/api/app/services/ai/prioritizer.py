@@ -33,14 +33,20 @@ class RecommendationPrioritizer:
 
         # If current value is empty for title or description, treat as high/medium
         if not current_value or not current_value.strip():
-            if rec_type in (RecommendationType.TITLE_OPTIMIZATION, RecommendationType.HEADING_STRUCTURE):
+            if rec_type in (
+                RecommendationType.TITLE_OPTIMIZATION,
+                RecommendationType.HEADING_STRUCTURE,
+            ):
                 return RecommendationPriority.HIGH
             return RecommendationPriority.MEDIUM
 
         # By recommendation type heuristic default
         if rec_type == RecommendationType.TITLE_OPTIMIZATION:
             return RecommendationPriority.HIGH
-        elif rec_type in (RecommendationType.META_DESCRIPTION, RecommendationType.HEADING_STRUCTURE):
+        elif rec_type in (
+            RecommendationType.META_DESCRIPTION,
+            RecommendationType.HEADING_STRUCTURE,
+        ):
             return RecommendationPriority.MEDIUM
         else:
             return RecommendationPriority.LOW

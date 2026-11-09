@@ -23,12 +23,7 @@ class FrontierItem:
 class CrawlFrontier:
     """In-memory BFS crawl frontier for a single crawl job execution."""
 
-    def __init__(
-        self,
-        max_pages: int = 50,
-        max_depth: int = 3,
-        politeness_delay: float = 1.0
-    ):
+    def __init__(self, max_pages: int = 50, max_depth: int = 3, politeness_delay: float = 1.0):
         self.max_pages = max_pages
         self.max_depth = max_depth
         self.politeness_delay = politeness_delay

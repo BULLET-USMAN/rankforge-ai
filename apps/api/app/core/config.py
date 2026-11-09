@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     Centralized configuration for RankForge AI backend.
     Loads from environment variables or falls back to secure defaults.
     """
+
     PROJECT_NAME: str = "RankForge AI API"
     VERSION: str = "0.2.0"
     ENVIRONMENT: str = "development"
@@ -46,6 +47,40 @@ class Settings(BaseSettings):
     DATABASE_URL: str = (
         "postgresql+psycopg://rankforge:rankforge_dev_password@localhost:5432/rankforge_db"
     )
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        if not v:
+            return v
+        # Standardize PostgreSQL dialect to psycopg v3 (psycopg[binary]>=3.2.0)
+        if v.startswith("postgres://"):
+            return "postgresql+psycopg://" + v[len("postgres://") :]
+        if v.startswith("postgresql://") and not v.startswith("postgresql+"):
+            return "postgresql+psycopg://" + v[len("postgresql://") :]
+        return v
+
+    # Public URLs for production routing and OAuth callbacks
+    PUBLIC_API_URL: Optional[str] = None
+    FRONTEND_URL: str = "http://localhost:3000"
+
+    # Google Search Console OAuth 2.0 Integration
+    GOOGLE_CLIENT_ID: Optional[str] = None
+    GOOGLE_CLIENT_SECRET: Optional[str] = None
+    GOOGLE_REDIRECT_URI: Optional[str] = None
+    GOOGLE_SEARCH_CONSOLE_SCOPE: str = (
+        "openid email https://www.googleapis.com/auth/webmasters.readonly"
+    )
+
+    def get_google_redirect_uri(self) -> str:
+        """Determines the exact Google OAuth callback URI based on configuration."""
+        if self.GOOGLE_REDIRECT_URI:
+            return self.GOOGLE_REDIRECT_URI
+        if self.PUBLIC_API_URL:
+            return (
+                f"{self.PUBLIC_API_URL.rstrip('/')}{self.API_V1_STR}/integrations/google/callback"
+            )
+        return f"http://localhost:8000{self.API_V1_STR}/integrations/google/callback"
 
     # Redis & Celery
     REDIS_URL: str = "redis://localhost:6379/0"

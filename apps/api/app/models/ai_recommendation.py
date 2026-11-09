@@ -15,13 +15,17 @@ class AIRecommendation(Base):
     """
     Evidence-grounded, reviewable AI SEO recommendation proposal.
     """
+
     __tablename__ = "ai_recommendations"
 
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
     )
     website_project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
     audit_run_id: Mapped[Optional[str]] = mapped_column(
         String(36), ForeignKey("seo_audit_runs.id", ondelete="SET NULL"), index=True, nullable=True
@@ -30,10 +34,16 @@ class AIRecommendation(Base):
         String(36), ForeignKey("crawl_jobs.id", ondelete="SET NULL"), index=True, nullable=True
     )
     source_finding_id: Mapped[Optional[str]] = mapped_column(
-        String(36), ForeignKey("seo_audit_findings.id", ondelete="SET NULL"), index=True, nullable=True
+        String(36),
+        ForeignKey("seo_audit_findings.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
     )
     job_id: Mapped[Optional[str]] = mapped_column(
-        String(36), ForeignKey("ai_generation_jobs.id", ondelete="SET NULL"), index=True, nullable=True
+        String(36),
+        ForeignKey("ai_generation_jobs.id", ondelete="SET NULL"),
+        index=True,
+        nullable=True,
     )
 
     page_url: Mapped[str] = mapped_column(String(2048), index=True, nullable=False)
@@ -58,7 +68,9 @@ class AIRecommendation(Base):
 
     prompt_template: Mapped[str] = mapped_column(String(64), default="seo_title_v1", nullable=False)
     prompt_version: Mapped[str] = mapped_column(String(32), default="1.0", nullable=False)
-    model_identifier: Mapped[str] = mapped_column(String(64), default="gemini-2.5-flash", nullable=False)
+    model_identifier: Mapped[str] = mapped_column(
+        String(64), default="gemini-2.5-flash", nullable=False
+    )
     current_version_number: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
 
     created_by: Mapped[Optional[str]] = mapped_column(
@@ -75,7 +87,9 @@ class AIRecommendation(Base):
     rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
     # Relationships
-    job: Mapped[Optional["AIGenerationJob"]] = relationship("AIGenerationJob", back_populates="recommendations")
+    job: Mapped[Optional["AIGenerationJob"]] = relationship(
+        "AIGenerationJob", back_populates="recommendations"
+    )
     source_finding: Mapped[Optional["SEOAuditFinding"]] = relationship("SEOAuditFinding")
     versions: Mapped[List["AIRecommendationVersion"]] = relationship(
         "AIRecommendationVersion",

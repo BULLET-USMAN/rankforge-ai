@@ -10,7 +10,9 @@ def test_unauthenticated_request_rejected(unauthenticated_client):
 
 def test_invalid_token_signature_rejected(unauthenticated_client):
     """Tokens signed with a fraudulent secret must be rejected."""
-    bad_token = jwt.encode({"sub": "fraud_user", "email": "fraud@rankforge.ai"}, "wrong-secret", algorithm="HS256")
+    bad_token = jwt.encode(
+        {"sub": "fraud_user", "email": "fraud@rankforge.ai"}, "wrong-secret", algorithm="HS256"
+    )
     res = unauthenticated_client.get(
         "/api/v1/me",
         headers={"Authorization": f"Bearer {bad_token}"},

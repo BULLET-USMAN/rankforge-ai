@@ -15,13 +15,17 @@ class AIGenerationJob(Base):
     """
     Asynchronous AI generation job record tracking recommendations batch.
     """
+
     __tablename__ = "ai_generation_jobs"
 
     organization_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("organizations.id", ondelete="CASCADE"), index=True, nullable=False
     )
     website_project_id: Mapped[str] = mapped_column(
-        String(36), ForeignKey("website_projects.id", ondelete="CASCADE"), index=True, nullable=False
+        String(36),
+        ForeignKey("website_projects.id", ondelete="CASCADE"),
+        index=True,
+        nullable=False,
     )
     audit_run_id: Mapped[Optional[str]] = mapped_column(
         String(36), ForeignKey("seo_audit_runs.id", ondelete="SET NULL"), index=True, nullable=True

@@ -59,13 +59,17 @@ class AIUsageMeter:
         monthly_tokens = db.execute(monthly_tokens_stmt).scalar() or 0
 
         # Include active reserved tokens
-        reserved_stmt = select(func.coalesce(func.sum(AIQuotaReservation.tokens_reserved), 0)).where(
+        reserved_stmt = select(
+            func.coalesce(func.sum(AIQuotaReservation.tokens_reserved), 0)
+        ).where(
             AIQuotaReservation.organization_id == organization_id,
             AIQuotaReservation.status == "active",
         )
         reserved_tokens = db.execute(reserved_stmt).scalar() or 0
 
-        if (monthly_tokens + reserved_tokens + estimated_tokens) > settings.AI_MONTHLY_ORG_TOKEN_LIMIT:
+        if (
+            monthly_tokens + reserved_tokens + estimated_tokens
+        ) > settings.AI_MONTHLY_ORG_TOKEN_LIMIT:
             raise AIQuotaExhaustedError(
                 f"Organization monthly AI token quota ({settings.AI_MONTHLY_ORG_TOKEN_LIMIT:,}) exhausted. "
                 f"Used: {monthly_tokens + reserved_tokens:,} tokens."
@@ -160,12 +164,15 @@ class AIUsageMeter:
         start_of_month = datetime(now.year, now.month, 1, tzinfo=timezone.utc)
 
         # 24h requests
-        daily_reqs = db.execute(
-            select(func.count(AIUsageRecord.id)).where(
-                AIUsageRecord.organization_id == organization_id,
-                AIUsageRecord.created_at >= start_of_day,
-            )
-        ).scalar() or 0
+        daily_reqs = (
+            db.execute(
+                select(func.count(AIUsageRecord.id)).where(
+                    AIUsageRecord.organization_id == organization_id,
+                    AIUsageRecord.created_at >= start_of_day,
+                )
+            ).scalar()
+            or 0
+        )
 
         # Monthly tokens & cost
         monthly_row = db.execute(
@@ -187,5 +194,8 @@ class AIUsageMeter:
             "monthly_tokens_used": monthly_tokens,
             "monthly_tokens_limit": settings.AI_MONTHLY_ORG_TOKEN_LIMIT,
             "monthly_estimated_cost_usd": round(monthly_cost, 4),
-            "quota_status": "normal" if daily_reqs < settings.AI_DAILY_ORG_REQUEST_LIMIT and monthly_tokens < settings.AI_MONTHLY_ORG_TOKEN_LIMIT else "exceeded",
+            "quota_status": "normal"
+            if daily_reqs < settings.AI_DAILY_ORG_REQUEST_LIMIT
+            and monthly_tokens < settings.AI_MONTHLY_ORG_TOKEN_LIMIT
+            else "exceeded",
         }

@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 
 class SSRFSecurityException(Exception):
     """Raised when a URL fails SSRF security validation."""
+
     pass
 
 
@@ -42,7 +43,10 @@ class SSRFGuard:
 
         # Check scheme
         if parsed.scheme.lower() not in cls.ALLOWED_SCHEMES:
-            return False, f"Scheme '{parsed.scheme}' is prohibited. Only HTTP and HTTPS are permitted."
+            return (
+                False,
+                f"Scheme '{parsed.scheme}' is prohibited. Only HTTP and HTTPS are permitted.",
+            )
 
         hostname = parsed.hostname
         if not hostname:
@@ -73,9 +77,15 @@ class SSRFGuard:
 
             # Specific cloud metadata and link-local protections first
             if str(ip) == "169.254.169.254":
-                return False, "Targeting cloud metadata endpoint (169.254.169.254) is strictly forbidden."
+                return (
+                    False,
+                    "Targeting cloud metadata endpoint (169.254.169.254) is strictly forbidden.",
+                )
             if ip.is_link_local:
-                return False, f"Resolved IP {ip_str} is a link-local address (metadata service protection)."
+                return (
+                    False,
+                    f"Resolved IP {ip_str} is a link-local address (metadata service protection).",
+                )
             if ip.is_loopback:
                 return False, f"Resolved IP {ip_str} is a loopback address."
             if ip.is_private:
